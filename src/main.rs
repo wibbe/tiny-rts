@@ -1,20 +1,19 @@
 
 extern crate tiny;
 
-use tiny::*;
 use std::path::Path;
 
 struct App {
-   font: Font,
+   font: tiny::Font,
 }
 
 
 impl tiny::Application for App {
    fn new(ctx: &tiny::Context) -> App {
-      let font_bitmap = Bitmap::load(ctx, Path::new("res/font.png")).unwrap();
+      let font_bitmap = tiny::Bitmap::load(ctx, Path::new("res/font.png")).unwrap();
 
       App {
-         font: Font::new(font_bitmap, 4, 7)
+         font: tiny::Font::new(font_bitmap, 4, 7)
       }
    }
    
@@ -24,7 +23,7 @@ impl tiny::Application for App {
 
    fn paint(&self, painter: &tiny::Painter) {
       painter.clear(tiny::BLACK);
-      painter.text(135, 90, "Hello World!", WHITE, &self.font);
+      painter.text(136, 96, "Hello World!", tiny::WHITE, &self.font);
    }
 }
 
