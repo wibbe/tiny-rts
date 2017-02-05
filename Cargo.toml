@@ -1,0 +1,7 @@
+[package]
+name = "tiny-rts"
+version = "0.1.0"
+authors = ["Daniel Wiberg <daniel@skillster.se>"]
+
+[dependencies]
+tiny = { path = "./tiny" }
