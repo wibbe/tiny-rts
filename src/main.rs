@@ -1,6 +1,8 @@
 
 extern crate tiny;
 
+mod cmd;
+
 use std::path::Path;
 
 struct App {
