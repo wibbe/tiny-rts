@@ -1,0 +1,13 @@
+package win32
+
+const (
+	SM_CXSCREEN = 0
+	SM_CYSCREEN = 1
+
+	TRUE  = 1
+	FALSE = 0
+
+	WS_CAPTION     uint = 0x00C00000
+	WS_SYSMENU     uint = 0x00080000
+	WS_MINIMIZEBOX uint = 0x00020000
+)
