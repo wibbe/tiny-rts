@@ -1,8 +1,12 @@
 package main
 
+import (
+	"tiny/platform"
+)
+
 func main() {
 
-	win := NewWindow(320, 200, 3, "Tiny RTS")
+	win := platform.NewWindow(320, 200, 3, "Tiny RTS")
 
 	for win.IsRunning() {
 

@@ -1,4 +1,4 @@
-package main
+package platform
 
 import "tiny/win32"
 import "unsafe"
@@ -9,7 +9,7 @@ type Window struct {
 }
 
 func NewWindow(width, height, scale int, title string) *Window {
-	registerClass(title + "Class")
+	registerClass("TinyRTSClass")
 
 	screenWidth := win32.GetSystemMetrics(win32.SM_CXSCREEN)
 	screenHeight := win32.GetSystemMetrics(win32.SM_CYSCREEN)
