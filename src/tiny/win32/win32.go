@@ -135,10 +135,10 @@ func ToIntResource(id uint16) *uint16 {
 	return (*uint16)(unsafe.Pointer(uintptr(id)))
 }
 
-func LoWord(dw uint32) uint16 {
-	return uint16(dw)
+func ToLoWord(value uint32) uint16 {
+	return uint16(value)
 }
 
-func HiWord(dw uint32) uint16 {
-	return uint16(dw >> 16 & 0xffff)
+func ToHiWord(value uint32) uint16 {
+	return uint16((value >> 16) & 0xffff)
 }
