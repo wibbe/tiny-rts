@@ -12,6 +12,7 @@ type (
 	HINSTANCE HANDLE
 	HICON     HANDLE
 	HCURSOR   HANDLE
+	HMENU     HANDLE
 	HBRUSH    HANDLE
 	HGDIOBJ   HANDLE
 )
@@ -35,6 +36,20 @@ type WNDCLASSEX struct {
 	IconSm     HICON
 }
 
+type POINT struct {
+	X int32
+	Y int32
+}
+
+type MSG struct {
+	hwnd    HWND
+	message uint
+	WParam  uint32
+	LParam  uint32
+	Time    uint32
+	Point   POINT
+}
+
 const (
 	SM_CXSCREEN = 0
 	SM_CYSCREEN = 1
@@ -45,6 +60,11 @@ const (
 	WS_CAPTION     uint = 0x00C00000
 	WS_SYSMENU     uint = 0x00080000
 	WS_MINIMIZEBOX uint = 0x00020000
+
+	SW_HIDE int = 0
+	SW_SHOW int = 5
+
+	PM_REMOVE uint = 0x0001
 
 	CS_VREDRAW uint = 0x0001
 	CS_HREDRAW uint = 0x0002
@@ -64,6 +84,11 @@ var (
 	procLoadCursor       = modUser32.NewProc("LoadCursorW")
 	procRegisterClassEx  = modUser32.NewProc("RegisterClassExW")
 	procDefWindowProc    = modUser32.NewProc("DefWindowProcW")
+	procCreateWindowEx   = modUser32.NewProc("CreateWindowExW")
+	procPeekMessage      = modUser32.NewProc("PeekMessageW")
+	procTranslateMessage = modUser32.NewProc("TranslateMessage")
+	procDispatchMessage  = modUser32.NewProc("DipatchMessageW")
+	procShowWindow       = modUser32.NewProc("ShowWindow")
 
 	// gdi32.dll
 	modGdi32           = syscall.NewLazyDLL("gdi32.dll")
@@ -105,6 +130,31 @@ func DefWindowProc(hwnd HWND, msg uint, wparam, lparam uintptr) uintptr {
 	return ret
 }
 
+func CreateWindowEx(exStyle uint, className, windowName string, style uint, x, y, width, height int, parent HWND, menu HMENU, instance HINSTANCE, param uintptr) HWND {
+	ret, _, _ := procCreateWindowEx.Call(uintptr(exStyle),
+		FromString(className), FromString(windowName),
+		uintptr(style), uintptr(x), uintptr(y),
+		uintptr(width), uintptr(height), uintptr(parent), uintptr(menu), uintptr(instance), uintptr(param))
+	return HWND(ret)
+}
+
+func PeekMessage(msg *MSG, hwnd HWND, msgFilterMin, msgFilterMax, removeMsg uint) bool {
+	ret, _, _ := procPeekMessage.Call(uintptr(unsafe.Pointer(msg)), uintptr(hwnd), uintptr(msgFilterMin), uintptr(msgFilterMax), uintptr(removeMsg))
+	return ret != FALSE
+}
+
+func TranslateMessage(msg *MSG) {
+	procTranslateMessage.Call(uintptr(unsafe.Pointer(msg)))
+}
+
+func DispatchMessage(msg *MSG) {
+	procDispatchMessage.Call(uintptr(unsafe.Pointer(msg)))
+}
+
+func ShowWindow(hwnd HWND, cmdShow int) {
+	procShowWindow.Call(uintptr(hwnd), uintptr(cmdShow))
+}
+
 // Library: gdi32.dll
 func GetStockObject(object int) HGDIOBJ {
 	ret, _, _ := procGetStockObject.Call(uintptr(object))
@@ -113,13 +163,7 @@ func GetStockObject(object int) HGDIOBJ {
 
 // Library: kernel32.dll
 func GetModuleHandle(moduleName string) HINSTANCE {
-	var name uintptr
-	if moduleName == "" {
-		name = 0
-	} else {
-		name = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(moduleName)))
-	}
-	ret, _, _ := procGetModuleHandle.Call(name)
+	ret, _, _ := procGetModuleHandle.Call(FromString(moduleName))
 	return HINSTANCE(ret)
 }
 
@@ -135,10 +179,18 @@ func ToIntResource(id uint16) *uint16 {
 	return (*uint16)(unsafe.Pointer(uintptr(id)))
 }
 
-func LoWord(dw uint32) uint16 {
-	return uint16(dw)
+func ToLoWord(value uint32) uint16 {
+	return uint16(value)
 }
 
-func HiWord(dw uint32) uint16 {
-	return uint16(dw >> 16 & 0xffff)
+func ToHiWord(value uint32) uint16 {
+	return uint16((value >> 16) & 0xffff)
+}
+
+func FromString(value string) uintptr {
+	var str uintptr
+	if value != "" {
+		str = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(value)))
+	}
+	return str
 }

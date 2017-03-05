@@ -5,7 +5,7 @@ import "unsafe"
 import "syscall"
 
 type Window struct {
-	hwnd win32.HWND
+	handle win32.HWND
 }
 
 func NewWindow(width, height, scale int, title string) PlatformWindow {
@@ -29,7 +29,22 @@ func NewWindow(width, height, scale int, title string) PlatformWindow {
 	style := win32.WS_CAPTION | win32.WS_SYSMENU | win32.WS_MINIMIZEBOX
 	win32.AdjustWindowRect(&rect, style, false)
 
-	return &Window{}
+	handle := win32.CreateWindowEx(0,
+		"TinyRTSClass",
+		title,
+		style,
+		int(rect.Left), int(rect.Top),
+		int(rect.Right-rect.Left), int(rect.Bottom-rect.Top),
+		0,
+		0,
+		win32.GetModuleHandle(""),
+		0)
+
+	return &Window{handle: handle}
+}
+
+func (w *Window) Show() {
+	win32.ShowWindow(w.handle, win32.SW_SHOW)
 }
 
 func (w *Window) IsRunning() bool {
@@ -37,7 +52,14 @@ func (w *Window) IsRunning() bool {
 }
 
 func (w *Window) Step() bool {
-	return false
+	msg := win32.MSG{}
+
+	for win32.PeekMessage(&msg, 0, 0, 0, win32.PM_REMOVE) {
+		win32.TranslateMessage(&msg)
+		win32.DispatchMessage(&msg)
+	}
+
+	return true
 }
 
 func registerClass(className string) {
