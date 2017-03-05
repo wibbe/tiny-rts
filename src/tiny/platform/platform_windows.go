@@ -7,6 +7,8 @@ import "syscall"
 type Window struct {
 	handle  syscall.Handle
 	running bool
+	width   int
+	height  int
 }
 
 func NewWindow(width, height, scale int, title string) (PlatformWindow, error) {
@@ -18,6 +20,8 @@ func NewWindow(width, height, scale int, title string) (PlatformWindow, error) {
 	window := &Window{
 		handle:  0,
 		running: true,
+		width:   width * scale,
+		height:  height * scale,
 	}
 
 	wndProc := func(hwnd syscall.Handle, msg uint32, wparam, lparam uintptr) uintptr {
@@ -43,16 +47,14 @@ func NewWindow(width, height, scale int, title string) (PlatformWindow, error) {
 	screenWidth := win32.GetSystemMetrics(win32.SM_CXSCREEN)
 	screenHeight := win32.GetSystemMetrics(win32.SM_CYSCREEN)
 
-	windowWidth := width * scale
-	windowHeight := height * scale
-	windowLeft := (screenWidth - windowWidth) / 2
-	windowTop := (screenHeight - windowHeight) / 2
+	windowLeft := (screenWidth - window.width) / 2
+	windowTop := (screenHeight - window.height) / 2
 
 	rect := win32.RECT{
 		Left:   int32(windowLeft),
-		Right:  int32(windowLeft + windowWidth),
+		Right:  int32(windowLeft + window.width),
 		Top:    int32(windowTop),
-		Bottom: int32(windowTop + windowHeight),
+		Bottom: int32(windowTop + window.height),
 	}
 
 	style := win32.WS_CAPTION | win32.WS_SYSMENU | win32.WS_MINIMIZEBOX
@@ -80,6 +82,14 @@ func NewWindow(width, height, scale int, title string) (PlatformWindow, error) {
 
 func (w *Window) Show() {
 	win32.ShowWindow(w.handle, win32.SW_SHOW)
+}
+
+func (w *Window) GetWidth() int {
+	return w.width
+}
+
+func (w *Window) GetHeight() int {
+	return w.height
 }
 
 func (w *Window) Step() bool {
