@@ -8,7 +8,7 @@ type Window struct {
 	hwnd win32.HWND
 }
 
-func NewWindow(width, height, scale int, title string) *Window {
+func NewWindow(width, height, scale int, title string) PlatformWindow {
 	registerClass("TinyRTSClass")
 
 	screenWidth := win32.GetSystemMetrics(win32.SM_CXSCREEN)
@@ -37,7 +37,7 @@ func (w *Window) IsRunning() bool {
 }
 
 func (w *Window) Step() bool {
-	return true
+	return false
 }
 
 func registerClass(className string) {
