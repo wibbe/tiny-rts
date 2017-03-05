@@ -86,6 +86,8 @@ var (
 	procDispatchMessage  = modUser32.NewProc("DispatchMessageW")
 	procShowWindow       = modUser32.NewProc("ShowWindow")
 	procPostQuitMessage  = modUser32.NewProc("PostQuitMessage")
+	procGetDC            = modUser32.NewProc("GetDC")
+	procReleaseDC        = modUser32.NewProc("ReleaseDC")
 
 	// gdi32.dll
 	modGdi32           = syscall.NewLazyDLL("gdi32.dll")
@@ -185,6 +187,19 @@ func ShowWindow(hwnd syscall.Handle, cmdShow int32) {
 
 func PostQuitMessage(exitCode int32) {
 	procPostQuitMessage.Call(uintptr(exitCode))
+}
+
+func GetDC(hwnd syscall.Handle) (syscall.Handle, error) {
+	ret, _, err := procGetDC.Call(uintptr(hwnd))
+	if ret == 0 {
+		return 0, err
+	}
+	return syscall.Handle(ret), nil
+}
+
+func ReleaseDC(hwnd, dc syscall.Handle) bool {
+	ret, _, _ := procReleaseDC.Call(uintptr(hwnd), uintptr(dc))
+	return ret == 1
 }
 
 // Library: gdi32.dll
