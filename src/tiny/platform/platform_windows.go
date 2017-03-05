@@ -1,14 +1,19 @@
 package platform
 
-import "tiny/win32"
-import "unsafe"
-import "syscall"
+import (
+	"image"
+	"syscall"
+	"tiny/win32"
+	"unsafe"
+)
 
 type Window struct {
 	handle  syscall.Handle
 	running bool
 	width   int
 	height  int
+	bmi     win32.BITMAPINFO
+	canvas  []uint8
 }
 
 func NewWindow(width, height, scale int, title string) (PlatformWindow, error) {
@@ -22,7 +27,25 @@ func NewWindow(width, height, scale int, title string) (PlatformWindow, error) {
 		running: true,
 		width:   width * scale,
 		height:  height * scale,
+		bmi: win32.BITMAPINFO{
+			Header: win32.BITMAPINFOHEADER{
+				Width:         int32(width),
+				Height:        int32(height),
+				Planes:        1,
+				BitCount:      32,
+				Compression:   win32.BI_RGB,
+				SizeImage:     0,
+				XPelsPerMeter: 0,
+				YPelsPerMeter: 0,
+				ClrUsed:       0,
+				ClrImportant:  0,
+			},
+			Colors: nil,
+		},
+		canvas: make([]uint8, width*height*4),
 	}
+
+	window.bmi.Header.Size = uint32(unsafe.Sizeof(window.bmi.Header))
 
 	wndProc := func(hwnd syscall.Handle, msg uint32, wparam, lparam uintptr) uintptr {
 		switch msg {
@@ -101,6 +124,44 @@ func (w *Window) Step() bool {
 	}
 
 	return w.running
+}
+
+func (w *Window) Paint(img *image.RGBA) error {
+	dc, err := win32.GetDC(w.handle)
+	if err != nil {
+		return err
+	}
+
+	size := img.Bounds().Size()
+
+	if len(w.canvas) != len(img.Pix) {
+		w.canvas = make([]uint8, len(img.Pix))
+	}
+
+	// Copy image data to the canvas
+	len := size.X * size.Y
+	for i := 0; i < len; i++ {
+		idx := i * 4
+		w.canvas[idx+0] = img.Pix[idx+2] // b
+		w.canvas[idx+1] = img.Pix[idx+1] // g
+		w.canvas[idx+2] = img.Pix[idx+0] // r
+		w.canvas[idx+3] = 255
+	}
+
+	// Blit the canvas to the window
+	err = win32.StretchDIBits(
+		dc,
+		0, 0,
+		int32(w.width), int32(w.height),
+		0, 0,
+		int32(size.X), int32(size.Y),
+		w.canvas,
+		&w.bmi,
+		win32.DIB_RGB_COLORS,
+		win32.SRCCOPY)
+
+	win32.ReleaseDC(w.handle, dc)
+	return err
 }
 
 func registerClass(className string, instance syscall.Handle, callback uintptr) error {

@@ -42,6 +42,32 @@ type MSG struct {
 	Point   POINT
 }
 
+type BITMAPINFOHEADER struct {
+	Size          uint32
+	Width         int32
+	Height        int32
+	Planes        uint16
+	BitCount      uint16
+	Compression   uint32
+	SizeImage     uint32
+	XPelsPerMeter int32
+	YPelsPerMeter int32
+	ClrUsed       uint32
+	ClrImportant  uint32
+}
+
+type RGBQUAD struct {
+	Blue      byte
+	Green     byte
+	Red       byte
+	Resereved byte
+}
+
+type BITMAPINFO struct {
+	Header BITMAPINFOHEADER
+	Colors *RGBQUAD
+}
+
 const (
 	SM_CXSCREEN int32 = 0
 	SM_CYSCREEN int32 = 1
@@ -68,6 +94,11 @@ const (
 
 	WM_DESTROY uint32 = 0x0002
 	WM_CLOSE   uint32 = 0x0010
+
+	BI_RGB uint32 = 0
+
+	DIB_RGB_COLORS uint32 = 0
+	SRCCOPY        uint32 = 0x00CC0020
 )
 
 var (
@@ -92,6 +123,7 @@ var (
 	// gdi32.dll
 	modGdi32           = syscall.NewLazyDLL("gdi32.dll")
 	procGetStockObject = modGdi32.NewProc("GetStockObject")
+	procStretchDIBits  = modGdi32.NewProc("StretchDIBits")
 
 	// kernel32.dll
 	modKernel32          = syscall.NewLazyDLL("kernel32.dll")
@@ -209,6 +241,29 @@ func GetStockObject(object int32) (syscall.Handle, error) {
 		return 0, err
 	}
 	return syscall.Handle(ret), nil
+}
+
+func StretchDIBits(dc syscall.Handle, destX, destY, destWidth, destHeight, srcX, srcY, srcWidth, srcHeight int32, bits []uint8, bitsInfo *BITMAPINFO, usage, rop uint32) error {
+	ret, _, err := procStretchDIBits.Call(
+		uintptr(dc),
+		uintptr(destX),
+		uintptr(destY),
+		uintptr(destWidth),
+		uintptr(destHeight),
+		uintptr(srcX),
+		uintptr(srcY),
+		uintptr(srcWidth),
+		uintptr(srcHeight),
+		uintptr(unsafe.Pointer(&bits[0])),
+		uintptr(unsafe.Pointer(bitsInfo)),
+		uintptr(usage),
+		uintptr(rop))
+
+	if ret == 0 {
+		return err
+	}
+
+	return nil
 }
 
 // Library: kernel32.dll
