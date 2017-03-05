@@ -1,6 +1,6 @@
 package platform
 
 type PlatformWindow interface {
-	IsRunning() bool
+	Show()
 	Step() bool
 }

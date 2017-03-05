@@ -5,11 +5,40 @@ import "unsafe"
 import "syscall"
 
 type Window struct {
-	handle win32.HWND
+	handle  syscall.Handle
+	running bool
 }
 
-func NewWindow(width, height, scale int, title string) PlatformWindow {
-	registerClass("TinyRTSClass")
+func NewWindow(width, height, scale int, title string) (PlatformWindow, error) {
+	instance, err := win32.GetModuleHandle()
+	if err != nil {
+		return nil, err
+	}
+
+	window := &Window{
+		handle:  0,
+		running: true,
+	}
+
+	wndProc := func(hwnd syscall.Handle, msg uint32, wparam, lparam uintptr) uintptr {
+		switch msg {
+		case win32.WM_CLOSE:
+			win32.DestroyWindow(hwnd)
+
+		case win32.WM_DESTROY:
+			win32.PostQuitMessage(0)
+			window.running = false
+
+		default:
+			return win32.DefWindowProc(hwnd, msg, wparam, lparam)
+		}
+		return 0
+	}
+
+	err = registerClass("TinyRTSClass", instance, syscall.NewCallback(wndProc))
+	if err != nil {
+		return nil, err
+	}
 
 	screenWidth := win32.GetSystemMetrics(win32.SM_CXSCREEN)
 	screenHeight := win32.GetSystemMetrics(win32.SM_CYSCREEN)
@@ -29,26 +58,28 @@ func NewWindow(width, height, scale int, title string) PlatformWindow {
 	style := win32.WS_CAPTION | win32.WS_SYSMENU | win32.WS_MINIMIZEBOX
 	win32.AdjustWindowRect(&rect, style, false)
 
-	handle := win32.CreateWindowEx(0,
+	handle, err := win32.CreateWindow(
 		"TinyRTSClass",
 		title,
 		style,
-		int(rect.Left), int(rect.Top),
-		int(rect.Right-rect.Left), int(rect.Bottom-rect.Top),
+		rect.Left,
+		rect.Top,
+		rect.Right-rect.Left,
+		rect.Bottom-rect.Top,
 		0,
 		0,
-		win32.GetModuleHandle(""),
-		0)
+		instance)
 
-	return &Window{handle: handle}
+	if err != nil {
+		return nil, err
+	}
+
+	window.handle = handle
+	return window, nil
 }
 
 func (w *Window) Show() {
 	win32.ShowWindow(w.handle, win32.SW_SHOW)
-}
-
-func (w *Window) IsRunning() bool {
-	return false
 }
 
 func (w *Window) Step() bool {
@@ -59,30 +90,40 @@ func (w *Window) Step() bool {
 		win32.DispatchMessage(&msg)
 	}
 
-	return true
+	return w.running
 }
 
-func registerClass(className string) {
-	var class win32.WNDCLASSEX
-
-	class.Size = uint(unsafe.Sizeof(class))
-	class.Style = win32.CS_HREDRAW | win32.CS_VREDRAW | win32.CS_OWNDC
-	class.WndProc = syscall.NewCallback(wndProc)
-	class.ClsExtra = 0
-	class.WndExtra = 0
-	class.Instance = win32.GetModuleHandle("")
-	class.Icon = win32.LoadIcon(0, win32.ToIntResource(win32.IDI_APPLICATION))
-	class.Cursor = win32.LoadCursor(0, win32.ToIntResource(win32.IDI_APPLICATION))
-	class.Background = win32.HBRUSH(win32.GetStockObject(win32.BLACK_BRUSH))
-	class.MenuName = nil
-	class.ClassName = syscall.StringToUTF16Ptr(className)
-	class.IconSm = 0
-
-	if !win32.RegisterClassEx(&class) {
-		panic(syscall.GetLastError())
+func registerClass(className string, instance syscall.Handle, callback uintptr) error {
+	class := win32.WNDCLASSEX{
+		Style:     win32.CS_HREDRAW | win32.CS_VREDRAW | win32.CS_OWNDC,
+		WndProc:   callback,
+		Instance:  instance,
+		ClassName: syscall.StringToUTF16Ptr(className),
 	}
-}
 
-func wndProc(hwnd win32.HWND, msg uint, wparam, lparam uintptr) uintptr {
-	return win32.DefWindowProc(hwnd, msg, wparam, lparam)
+	if icon, err := win32.LoadIcon(0, win32.ToIntResource(win32.IDI_APPLICATION)); err == nil {
+		class.Icon = icon
+	} else {
+		return err
+	}
+
+	if cursor, err := win32.LoadCursor(0, win32.ToIntResource(win32.IDI_APPLICATION)); err == nil {
+		class.Cursor = cursor
+	} else {
+		return err
+	}
+
+	if brush, err := win32.GetStockObject(win32.BLACK_BRUSH); err == nil {
+		class.Background = brush
+	} else {
+		return err
+	}
+
+	class.Size = uint32(unsafe.Sizeof(class))
+
+	if _, err := win32.RegisterClass(&class); err != nil {
+		return err
+	}
+
+	return nil
 }
