@@ -11,7 +11,12 @@ import (
 
 func main() {
 
-	win, err := platform.NewWindow(320, 200, 3, "Tiny RTS")
+	win, err := platform.NewWindow(
+		platform.Width(320),
+		platform.Height(200),
+		platform.Scale(3),
+		platform.Title("Tiny RTS"))
+
 	if err != nil {
 		fmt.Println(err)
 		return

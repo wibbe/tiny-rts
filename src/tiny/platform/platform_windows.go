@@ -1,22 +1,33 @@
+// +build windows
+
 package platform
 
 import (
 	"image"
+	"runtime"
 	"syscall"
 	"tiny/win32"
 	"unsafe"
 )
 
 type Window struct {
-	handle  syscall.Handle
-	running bool
-	width   int
-	height  int
-	bmi     win32.BITMAPINFO
-	canvas  []uint8
+	handle   syscall.Handle
+	running  bool
+	width    int
+	height   int
+	bmi      win32.BITMAPINFO
+	canvas   []uint8
+	keyState []bool
+	keyDelta []bool
 }
 
-func NewWindow(width, height, scale int, title string) (PlatformWindow, error) {
+func init() {
+	runtime.LockOSThread()
+}
+
+func NewWindow(options ...option) (PlatformWindow, error) {
+	cfg := getConfig(options)
+
 	instance, err := win32.GetModuleHandle()
 	if err != nil {
 		return nil, err
@@ -25,12 +36,12 @@ func NewWindow(width, height, scale int, title string) (PlatformWindow, error) {
 	window := &Window{
 		handle:  0,
 		running: true,
-		width:   width * scale,
-		height:  height * scale,
+		width:   cfg.width * cfg.scale,
+		height:  cfg.height * cfg.scale,
 		bmi: win32.BITMAPINFO{
 			Header: win32.BITMAPINFOHEADER{
-				Width:         int32(width),
-				Height:        int32(height),
+				Width:         int32(cfg.width),
+				Height:        int32(cfg.height),
 				Planes:        1,
 				BitCount:      32,
 				Compression:   win32.BI_RGB,
@@ -42,7 +53,9 @@ func NewWindow(width, height, scale int, title string) (PlatformWindow, error) {
 			},
 			Colors: nil,
 		},
-		canvas: make([]uint8, width*height*4),
+		canvas:   make([]uint8, cfg.width*cfg.height*4),
+		keyState: make([]bool, 256),
+		keyDelta: make([]bool, 256),
 	}
 
 	window.bmi.Header.Size = uint32(unsafe.Sizeof(window.bmi.Header))
@@ -85,7 +98,7 @@ func NewWindow(width, height, scale int, title string) (PlatformWindow, error) {
 
 	handle, err := win32.CreateWindow(
 		"TinyRTSClass",
-		title,
+		cfg.title,
 		style,
 		rect.Left,
 		rect.Top,
@@ -118,6 +131,10 @@ func (w *Window) GetHeight() int {
 func (w *Window) Step() bool {
 	msg := win32.MSG{}
 
+	for i := 0; i < len(w.keyDelta); i++ {
+		w.keyDelta[i] = false
+	}
+
 	for win32.PeekMessage(&msg, 0, 0, 0, win32.PM_REMOVE) {
 		win32.TranslateMessage(&msg)
 		win32.DispatchMessage(&msg)
@@ -126,26 +143,33 @@ func (w *Window) Step() bool {
 	return w.running
 }
 
-func (w *Window) Paint(img *image.RGBA) error {
+func (w *Window) Paint(img image.Image) error {
 	dc, err := win32.GetDC(w.handle)
 	if err != nil {
 		return err
 	}
 
-	size := img.Bounds().Size()
+	defer win32.ReleaseDC(w.handle, dc)
 
-	if len(w.canvas) != len(img.Pix) {
-		w.canvas = make([]uint8, len(img.Pix))
+	bounds := img.Bounds()
+	size := bounds.Size()
+
+	if len(w.canvas) != size.X*size.Y {
+		w.canvas = make([]uint8, size.X*size.Y*4)
 	}
 
 	// Copy image data to the canvas
-	len := size.X * size.Y
-	for i := 0; i < len; i++ {
-		idx := i * 4
-		w.canvas[idx+0] = img.Pix[idx+2] // b
-		w.canvas[idx+1] = img.Pix[idx+1] // g
-		w.canvas[idx+2] = img.Pix[idx+0] // r
-		w.canvas[idx+3] = 255
+	idx := 0
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			r, g, b, _ := img.At(x, y).RGBA()
+			w.canvas[idx+3] = 255
+			w.canvas[idx+2] = uint8(r >> 8)
+			w.canvas[idx+1] = uint8(g >> 8)
+			w.canvas[idx+0] = uint8(b >> 8)
+
+			idx += 4
+		}
 	}
 
 	// Blit the canvas to the window
@@ -160,7 +184,6 @@ func (w *Window) Paint(img *image.RGBA) error {
 		win32.DIB_RGB_COLORS,
 		win32.SRCCOPY)
 
-	win32.ReleaseDC(w.handle, dc)
 	return err
 }
 
