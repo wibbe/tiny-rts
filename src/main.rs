@@ -7,6 +7,7 @@ use std::path::Path;
 
 struct App {
    font: tiny::Font,
+   red:  u8,
 }
 
 
@@ -15,7 +16,8 @@ impl tiny::Application for App {
       let font_bitmap = tiny::Bitmap::load(ctx, Path::new("res/font.png")).unwrap();
 
       App {
-         font: tiny::Font::new(font_bitmap, 4, 7)
+         font: tiny::Font::new(font_bitmap, 4, 7),
+         red: ctx.palette_add(tiny::Color::new(255, 0, 0, 255)),
       }
    }
    
@@ -25,7 +27,7 @@ impl tiny::Application for App {
 
    fn paint(&self, painter: &tiny::Painter) {
       painter.clear(tiny::BLACK);
-      painter.text(136, 96, "Hello World!", tiny::WHITE, &self.font);
+      painter.text(136, 96, "Hello, World!", self.red, &self.font);
    }
 }
 

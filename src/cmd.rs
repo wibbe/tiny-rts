@@ -7,14 +7,14 @@ pub struct Function {
 
 }
 
-pub fn register_var(name: String) -> Result<(), String> {
+pub fn register_var(_name: String) -> Result<(), String> {
    Ok(())
 }
 
-pub fn register_func(name: String) -> Result<(), String> {
+pub fn register_func(_name: String) -> Result<(), String> {
    Ok(())
 }
 
-pub fn exec(line: String) -> Result<(), String> {
+pub fn exec(_line: String) -> Result<(), String> {
    Ok(())
 }

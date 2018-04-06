@@ -1,6 +1,7 @@
 extern crate libc;
 extern crate image;
 
+/*
 #[cfg(target_os = "windows")]
 mod platform {
     extern crate winapi;
@@ -11,6 +12,12 @@ mod platform {
 
     mod windows;
     pub use self::windows::*;
+}
+*/
+
+mod platform {  
+   mod glutin_window;
+   pub use self::glutin_window::*;
 }
 
 mod bitmap;
@@ -119,7 +126,7 @@ impl Rect {
        }
    }
 
-   
+   #[inline]
    pub fn tr(&self, x: i32, y: i32) -> Rect {
        Rect {
            left: self.left + x,
@@ -136,6 +143,26 @@ impl Rect {
            top: cmp::max(self.top, y),
            bottom: cmp::min(self.bottom, y + h),
        }
+   }
+
+   #[inline]
+   pub fn grow(&self, w: i32, h: i32) -> Rect {
+      Rect {
+         left: self.left,
+         right: self.right + w,
+         top: self.top,
+         bottom: self.bottom + h,
+      }
+   }
+
+   #[inline]
+   pub fn width(&self) -> i32 {
+      self.right - self.left
+   }
+
+   #[inline]
+   pub fn height(&self) -> i32 {
+      self.bottom - self.top
    }
 }
 
@@ -186,6 +213,33 @@ impl Font {
          char_width: char_width as i32,
          char_height: char_height as i32,
       }
+   }
+
+   pub fn measure(&self, text: &str) -> Rect {
+      let mut x_curr = 0;
+      let mut x_max = 0;
+      let mut y_max = 0;
+
+      for ch in text.chars() {
+         let idx = ch as u32;
+         if idx < 256 {
+            match ch {
+               ' ' => x_curr += self.char_width,
+               '\t' => x_curr += self.char_width,
+               '\n' => {
+                  x_curr = 0;
+                  y_max += (self.char_height as f32 * 1.5) as i32;
+               },
+               _ => x_curr += self.char_width,
+            }
+
+            if x_curr > x_max {
+               x_max = x_curr;
+            }
+         }
+      }
+
+      Rect::new_size(0, 0, x_max, y_max)
    }
 }
 
