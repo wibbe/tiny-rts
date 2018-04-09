@@ -282,12 +282,12 @@ pub struct Color {
 
 impl Color {
    pub fn new(r: u8, g: u8, b: u8, a: u8) -> Color {
-      Color { rgba: (a as u32) << 24 | (r as u32) << 16 | (g as u32) << 8 | b as u32 }
+      Color { rgba: (a as u32) << 24 | (b as u32) << 16 | (g as u32) << 8 | r as u32 }
    }
 
    #[inline]
    pub fn red(&self) -> u8 {
-      ((self.rgba >> 16) & 0xff) as u8
+      (self.rgba & 0xff) as u8
    }
 
    #[inline]
@@ -297,7 +297,7 @@ impl Color {
 
    #[inline]
    pub fn blue(&self) -> u8 {
-      (self.rgba & 0xff) as u8
+      ((self.rgba >> 16) & 0xff) as u8
    }
 
    #[inline]

@@ -7,6 +7,7 @@ extern crate glutin;
 
 use self::glutin::GlContext;
 use std::boxed::Box;
+use std::mem;
 use std::ptr;
 
 use super::super::*;
@@ -21,12 +22,12 @@ pub struct Window {
    pub key_delta: [bool; 256],
 
    canvas_buffer: Vec<u32>,
-   canvas_width: i32,
-   canvas_height: i32,
+   canvas_width: u32,
+   canvas_height: u32,
    canvas_tex: u32,
 
-   window_width: i32,
-   window_height: i32,
+   window_width: u32,
+   window_height: u32,
 }
 
 impl Window {
@@ -80,10 +81,10 @@ impl Window {
 
          canvas_buffer: canvas_buffer,
          canvas_tex: canvas_tex,
-         canvas_width: config.width as i32,
-         canvas_height: config.height as i32,
-         window_width: window_width as i32,
-         window_height: window_height as i32,
+         canvas_width: config.width,
+         canvas_height: config.height,
+         window_width: window_width,
+         window_height: window_height,
       })
    }
 
@@ -99,7 +100,21 @@ impl Window {
       self.background_color = color;
    }
 
-   pub fn paint(&mut self, _bitmap: &Bitmap, _palette_colors: &Vec<Color>) {
+   pub fn paint(&mut self, bitmap: &Bitmap, palette_colors: &Vec<Color>) {
+
+      // We start by updating the canvas buffer
+      unsafe {
+         let pixels = self.canvas_buffer.as_mut_ptr();
+         let mut i = 0;
+
+         for y in 0..self.canvas_height {
+            for x in 0..self.canvas_width {
+               *pixels.offset(i) = palette_colors[bitmap.pixel(x, self.canvas_height - y - 1) as usize].rgba;
+               i += 1;
+            }
+         }
+      }
+
       unsafe {
          self.window.make_current().unwrap();
 
@@ -109,7 +124,7 @@ impl Window {
                         1.0);
          gl::Clear(gl::COLOR_BUFFER_BIT);
 
-         gl::Viewport(0, 0, self.window_width, self.window_height);
+         gl::Viewport(0, 0, self.window_width as i32, self.window_height as i32);
          gl::MatrixMode(gl::PROJECTION);
          gl::LoadIdentity();
          gl::Ortho(0.0, self.window_width as f64, 0.0, self.window_height as f64, 1.0, -1.0);
@@ -117,7 +132,21 @@ impl Window {
          gl::LoadIdentity();
 
          gl::BindTexture(gl::TEXTURE_2D, self.canvas_tex);
+         gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGBA as i32, self.canvas_width as i32, self.canvas_height as i32, 0, gl::RGBA, gl::UNSIGNED_BYTE, mem::transmute(self.canvas_buffer.as_ptr()));
 
+        gl::Begin(gl::QUADS);
+            gl::TexCoord2f(0.0, 0.0);
+            gl::Vertex2f(0.0, 0.0);
+
+            gl::TexCoord2f(1.0, 0.0);
+            gl::Vertex2f(self.window_width as f32, 0.0);
+
+            gl::TexCoord2f(1.0, 1.0);
+            gl::Vertex2f(self.window_width as f32, self.window_height as f32);
+
+            gl::TexCoord2f(0.0, 1.0);
+            gl::Vertex2f(0.0, self.window_height as f32);
+         gl::End();
 
 /*
         glClearColor(
