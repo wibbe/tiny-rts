@@ -285,18 +285,22 @@ impl Color {
       Color { rgba: (a as u32) << 24 | (r as u32) << 16 | (g as u32) << 8 | b as u32 }
    }
 
+   #[inline]
    pub fn red(&self) -> u8 {
       ((self.rgba >> 16) & 0xff) as u8
    }
 
+   #[inline]
    pub fn green(&self) -> u8 {
       ((self.rgba >> 8) & 0xff) as u8
    }
 
+   #[inline]
    pub fn blue(&self) -> u8 {
       (self.rgba & 0xff) as u8
    }
 
+   #[inline]
    pub fn alpha(&self) -> u8 {
       ((self.rgba >> 24) & 0xff) as u8
    }
@@ -450,6 +454,10 @@ impl Context {
 
    pub fn key_pressed(&self, key: Key) -> bool {
        self.window.key_state[key as usize] && self.window.key_delta[key as usize]
+   }
+
+   pub fn set_background_color(&mut self, color: Color) {
+      self.window.set_background_color(color);
    }
 }
 

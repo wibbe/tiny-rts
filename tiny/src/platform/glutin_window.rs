@@ -15,13 +15,18 @@ pub struct Window {
    events_loop: Box<glutin::EventsLoop>,
    window: Box<glutin::GlWindow>,
 
-   canvas_buffer: Vec<u32>,
+   background_color: Color,
+  
    pub key_state: [bool; 256],
    pub key_delta: [bool; 256],
-   canvas_width: u32,
-   canvas_height: u32,
-   window_width: u32,
-   window_height: u32,
+
+   canvas_buffer: Vec<u32>,
+   canvas_width: i32,
+   canvas_height: i32,
+   canvas_tex: u32,
+
+   window_width: i32,
+   window_height: i32,
 }
 
 impl Window {
@@ -45,27 +50,40 @@ impl Window {
          Err(_) => return Err("Could not create OpenGL Window".to_string()),
       };
 
+      let mut canvas_tex = 0;
+
       unsafe {
          match gl_window.make_current() {
             Err(_) => return Err("Could not make OpenGL context current".to_string()),
             _ => (),
          }
 
-        gl::load_with(|symbol| gl_window.get_proc_address(symbol) as *const _);
-        gl::ClearColor(0.0, 1.0, 0.0, 1.0);
+         gl::load_with(|symbol| gl_window.get_proc_address(symbol) as *const _);
+         gl::ClearColor(0.0, 1.0, 0.0, 1.0);
+
+         // Generate canvas texture
+         gl::Enable(gl::TEXTURE_2D);
+         gl::GenTextures(1, &mut canvas_tex);
+         gl::BindTexture(gl::TEXTURE_2D, canvas_tex);
+         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER as u32, gl::NEAREST as i32);
+         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER as u32, gl::NEAREST as i32);
       }
 
       Ok(Window { 
          events_loop: events_loop,
          window: gl_window,
 
-         canvas_buffer: canvas_buffer,
+         background_color: Color::new(0, 0, 0, 255),
+
          key_state: [false; 256],
          key_delta: [false; 256],
-         canvas_width: config.width,
-         canvas_height: config.height,
-         window_width: window_width,
-         window_height: window_height,
+
+         canvas_buffer: canvas_buffer,
+         canvas_tex: canvas_tex,
+         canvas_width: config.width as i32,
+         canvas_height: config.height as i32,
+         window_width: window_width as i32,
+         window_height: window_height as i32,
       })
    }
 
@@ -77,10 +95,63 @@ impl Window {
       self.window.hide();
    }
 
+   pub fn set_background_color(&mut self, color: Color) {
+      self.background_color = color;
+   }
+
    pub fn paint(&mut self, _bitmap: &Bitmap, _palette_colors: &Vec<Color>) {
       unsafe {
          self.window.make_current().unwrap();
+
+         gl::ClearColor(self.background_color.red() as f32 / 255.0,
+                        self.background_color.green() as f32 / 255.0,
+                        self.background_color.blue() as f32 / 255.0,
+                        1.0);
          gl::Clear(gl::COLOR_BUFFER_BIT);
+
+         gl::Viewport(0, 0, self.window_width, self.window_height);
+         gl::MatrixMode(gl::PROJECTION);
+         gl::LoadIdentity();
+         gl::Ortho(0.0, self.window_width as f64, 0.0, self.window_height as f64, 1.0, -1.0);
+         gl::MatrixMode(gl::MODELVIEW);
+         gl::LoadIdentity();
+
+         gl::BindTexture(gl::TEXTURE_2D, self.canvas_tex);
+
+
+/*
+        glClearColor(
+            CORE->background.r / 255.0f,
+            CORE->background.g / 255.0f,
+            CORE->background.b / 255.0f,
+            1.0f);
+
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        f32 window_scaled_width  = CORE->window.width  * CORE->window.scale;
+        f32 window_scaled_height = CORE->window.height * CORE->window.scale;
+
+        glViewport(CORE->window.viewport_min_x, CORE->window.viewport_min_y,
+            window_scaled_width, window_scaled_height);
+
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        // glOrtho(0.0, window_scaled_width, window_scaled_height, 0.0, 1.0, -1.0);
+        glOrtho(0.0, window_scaled_width, 0.0, window_scaled_height, 1.0, -1.0);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+
+        glBindTexture(GL_TEXTURE_2D, win32_.gl_texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, CORE->window.width, CORE->window.height, 0, GL_BGRA, GL_UNSIGNED_BYTE, window_buffer);
+
+        glBegin(GL_QUADS);
+            glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0f, 0.0f);
+            glTexCoord2f(1.0f, 0.0f); glVertex2f(window_scaled_width, 0.0f);
+            glTexCoord2f(1.0f, 1.0f); glVertex2f(window_scaled_width, window_scaled_height);
+            glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f, window_scaled_height);
+glEnd();
+*/
+
       }
 
       self.window.swap_buffers().unwrap();
