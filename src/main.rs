@@ -2,8 +2,10 @@
 extern crate tiny;
 
 mod cmd;
+mod game;
 
 use std::path::Path;
+
 
 struct App {
    font: tiny::Font,
