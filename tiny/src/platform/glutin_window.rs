@@ -41,6 +41,8 @@ impl Window {
       let events_loop = Box::new(glutin::EventsLoop::new());
       let window = glutin::WindowBuilder::new()
          .with_dimensions(window_width, window_height)
+         .with_min_dimensions(window_width, window_height)
+         .with_max_dimensions(window_width, window_height)
          .with_title(config.title.to_string())
          .with_visibility(true);
 
@@ -100,7 +102,7 @@ impl Window {
       self.background_color = color;
    }
 
-   pub fn paint(&mut self, bitmap: &Bitmap, palette_colors: &Vec<Color>) {
+   pub fn paint(&mut self, bitmap: &Bitmap, palette_colors: &Vec<Color>) -> Result<(), String> {
 
       // We start by updating the canvas buffer
       unsafe {
@@ -116,11 +118,13 @@ impl Window {
       }
 
       unsafe {
-         self.window.make_current().unwrap();
+         if let Err(err) = self.window.make_current() {
+            return Err("Could not make OpenGL context current".to_string());
+         }
 
-         gl::ClearColor(self.background_color.red() as f32 / 255.0,
-                        self.background_color.green() as f32 / 255.0,
-                        self.background_color.blue() as f32 / 255.0,
+         gl::ClearColor(self.background_color.redf(),
+                        self.background_color.greenf(),
+                        self.background_color.bluef(),
                         1.0);
          gl::Clear(gl::COLOR_BUFFER_BIT);
 
@@ -147,73 +151,52 @@ impl Window {
             gl::TexCoord2f(0.0, 1.0);
             gl::Vertex2f(0.0, self.window_height as f32);
          gl::End();
-
-/*
-        glClearColor(
-            CORE->background.r / 255.0f,
-            CORE->background.g / 255.0f,
-            CORE->background.b / 255.0f,
-            1.0f);
-
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        f32 window_scaled_width  = CORE->window.width  * CORE->window.scale;
-        f32 window_scaled_height = CORE->window.height * CORE->window.scale;
-
-        glViewport(CORE->window.viewport_min_x, CORE->window.viewport_min_y,
-            window_scaled_width, window_scaled_height);
-
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        // glOrtho(0.0, window_scaled_width, window_scaled_height, 0.0, 1.0, -1.0);
-        glOrtho(0.0, window_scaled_width, 0.0, window_scaled_height, 1.0, -1.0);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-
-        glBindTexture(GL_TEXTURE_2D, win32_.gl_texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, CORE->window.width, CORE->window.height, 0, GL_BGRA, GL_UNSIGNED_BYTE, window_buffer);
-
-        glBegin(GL_QUADS);
-            glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0f, 0.0f);
-            glTexCoord2f(1.0f, 0.0f); glVertex2f(window_scaled_width, 0.0f);
-            glTexCoord2f(1.0f, 1.0f); glVertex2f(window_scaled_width, window_scaled_height);
-            glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f, window_scaled_height);
-glEnd();
-*/
-
       }
 
-      self.window.swap_buffers().unwrap();
+      if let Err(err) = self.window.swap_buffers() {
+         return Err("Could not swap window buffer".to_string());
+      }
+
+      Ok(())
    }
 
    pub fn pump(&mut self) -> bool {
       let mut running = true;
-      let window = &self.window;
+      //let window = &self.window;
 
       unsafe { ptr::write_bytes::<bool>(self.key_delta.as_mut_ptr(), 0, 256); }
 
-      let mut key_delta = &mut self.key_delta;
-      let mut key_state = &mut self.key_state;
+      let events_loop = &mut self.events_loop;
+      let window = &mut self.window;
+      let key_state = &mut self.key_state;
+      let key_delta = &mut self.key_delta;
 
-      self.events_loop.poll_events(|event| {
+      events_loop.poll_events(|event| {
          match event {
             glutin::Event::WindowEvent{ event, .. } => match event {
                glutin::WindowEvent::Closed => running = false,
-               glutin::WindowEvent::Resized(w, h) => window.resize(w, h),
-               glutin::WindowEvent::KeyboardInput { input, .. } => if let Some(virtual_keycode) = input.virtual_keycode {
-                  let key = keycode_glutin_to_tiny(virtual_keycode);
+               
+               glutin::WindowEvent::Resized(w, h) => {
+                  window.resize(w, h);
+               },
 
-                  match input.state {
-                     glutin::ElementState::Pressed => {
-                        key_state[key as usize] = true;
-                        key_delta[key as usize] = true;
-                     },
-                     glutin::ElementState::Released => {
-                        key_state[key as usize] = false;
-                        key_delta[key as usize] = true;
-                     },                        
+               glutin::WindowEvent::KeyboardInput { input, .. } => {
+                  if let Some(virtual_keycode) = input.virtual_keycode {
+                     let key = keycode_glutin_to_tiny(virtual_keycode);
+
+                     match input.state {
+                        glutin::ElementState::Pressed => {
+                           key_state[key as usize] = true;
+                           key_delta[key as usize] = true;
+                        },
+                        glutin::ElementState::Released => {
+                           key_state[key as usize] = false;
+                           key_delta[key as usize] = true;
+                        },              
+                     }
                   }
                },
+
                _ => (),
             },
             _ => (),
@@ -224,8 +207,8 @@ glEnd();
    }
 }
 
-fn keycode_glutin_to_tiny(keyCode: glutin::VirtualKeyCode) -> Key {
-   match keyCode {
+fn keycode_glutin_to_tiny(key_code: glutin::VirtualKeyCode) -> Key {
+   match key_code {
       glutin::VirtualKeyCode::Key1 => Key::Key1,
       glutin::VirtualKeyCode::Key2 => Key::Key2,
       glutin::VirtualKeyCode::Key3 => Key::Key3,

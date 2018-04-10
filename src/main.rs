@@ -12,13 +12,13 @@ struct App {
 
 
 impl tiny::Application for App {
-   fn new(ctx: &tiny::Context) -> App {
+   fn new(ctx: &tiny::Context) -> Result<App, String> {
       let font_bitmap = tiny::Bitmap::load(ctx, Path::new("res/font.png")).unwrap();
 
-      App {
+      Ok(App {
          font: tiny::Font::new(font_bitmap, 4, 7),
          red: ctx.palette_add(tiny::Color::new(255, 0, 0, 255)),
-      }
+      })
    }
    
    fn step(&mut self, ctx: &tiny::Context) -> bool {

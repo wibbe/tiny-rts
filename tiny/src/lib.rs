@@ -304,6 +304,26 @@ impl Color {
    pub fn alpha(&self) -> u8 {
       ((self.rgba >> 24) & 0xff) as u8
    }
+
+   #[inline]
+   pub fn redf(&self) -> f32 {
+      self.red() as f32 / 255.0
+   }
+
+   #[inline]
+   pub fn greenf(&self) -> f32 {
+      self.green() as f32 / 255.0
+   }
+
+   #[inline]
+   pub fn bluef(&self) -> f32 {
+      self.blue() as f32 / 255.0
+   }
+
+   #[inline]
+   pub fn alphaf(&self) -> f32 {
+      self.alpha() as f32 / 255.0
+   }
 }
 
 pub struct Font {
@@ -401,7 +421,7 @@ pub trait Painter {
 }
 
 pub trait Application : Sized {
-   fn new(ctx: &Context) -> Self;
+   fn new(ctx: &Context) -> Result<Self, String>;
 
    fn step(&mut self, ctx: &Context) -> bool { !ctx.key_pressed(Key::Escape) }
    fn paint(&self, painter: &Painter);
@@ -490,7 +510,11 @@ pub fn run<T: Application>(title: &str, width: u32, height: u32, scale: u32) -> 
    };
 
    // Initialize the application
-   let mut app = T::new(&context);
+   let mut app = match T::new(&context) {
+      Ok(app) => app,
+      Err(err) => return Err(err),
+   };
+   
    context.window.show();
 
    let target_frame_time = 33_333_333u32; // An fps of 30Hz
@@ -525,7 +549,11 @@ pub fn run<T: Application>(title: &str, width: u32, height: u32, scale: u32) -> 
 
       {  // Blit canvas to the window
          let blit_now = Instant::now();
-         context.window.paint(&context.canvas, &context.palette.borrow_mut().colors);
+
+         if let Err(err) = context.window.paint(&context.canvas, &context.palette.borrow_mut().colors) {
+            return Err(err);            
+         }
+
          context.blit_time = to_milisec(blit_now.elapsed());
       }
 
