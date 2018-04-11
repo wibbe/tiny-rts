@@ -1,39 +1,4 @@
 
-/*
-      #d6a090  rgb(84.0%, 62.6%, 56.4%)   pinkish tan
-      #fe3b1e  rgb(99.6%, 23.1%, 11.8%)   orangey red
-      #a12c32  rgb(63.3%, 17.5%, 19.6%)   rouge
-      #fa2f7a  rgb(98.0%, 18.5%, 47.7%)   strong pink
-      #fb9fda  rgb(98.2%, 62.4%, 85.5%)   bubblegum pink
-      #e61cf7  rgb(90.1%, 11.1%, 96.8%)   pink/purple
-      #992f7c  rgb(59.9%, 18.6%, 48.7%)   warm purple
-      #47011f  rgb(27.9%, 0.5%, 12.5%)    burgundy
-      #051155  rgb(2.3%, 6.7%, 33.3%)  navy blue
-      #4f02ec  rgb(31.2%, 0.9%, 92.3%)    blue/purple
-      #2d69cb  rgb(17.7%, 41.3%, 79.5%)   medium blue
-      #00a6ee  rgb(0.3%, 64.9%, 93.3%)    azure
-      #6febff  rgb(43.5%, 91.9%, 99.9%)   robin’s egg
-      #08a29a  rgb(3.2%, 63.6%, 60.5%)    blue/green
-      #2a666a  rgb(16.7%, 40.1%, 41.5%)   dark aqua
-      #063619  rgb(2.4%, 21.2%, 10.0%)    dark forest green
-      #000000  rgb(0.0%, 0.0%, 0.0%)   black
-      #4a4957  rgb(29.0%, 28.6%, 34.3%)   charcoal grey
-      #8e7ba4  rgb(55.5%, 48.3%, 64.4%)   greyish purple
-      #b7c0ff  rgb(71.7%, 75.3%, 99.8%)   light periwinkle
-      #ffffff  rgb(100.0%, 100.0%, 100.0%)   white
-      #acbe9c  rgb(67.4%, 74.4%, 61.2%)   greenish grey
-      #827c70  rgb(50.9%, 48.8%, 44.0%)   medium grey
-      #5a3b1c  rgb(35.2%, 23.3%, 11.0%)   brown
-      #ae6507  rgb(68.2%, 39.6%, 2.8%)    umber
-      #f7aa30  rgb(96.8%, 66.4%, 19.0%)   yellowish orange
-      #f4ea5c  rgb(95.5%, 91.5%, 36.0%)   yellowish
-      #9b9500  rgb(60.6%, 58.4%, 0.4%)    pea soup
-      #566204  rgb(33.9%, 38.4%, 1.7%)    mud green
-      #11963b  rgb(7.0%, 58.8%, 23.1%)    kelley green
-      #51e113  rgb(31.7%, 88.0%, 7.6%)    toxic green
-      #08fdcc  rgb(3.5%, 99.1%, 79.8%)    bright teal
-*/
-
 use super::super::*;
 
 pub const PINKISH_TAN: u8 = 0;

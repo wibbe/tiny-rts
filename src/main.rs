@@ -4,7 +4,7 @@ extern crate tiny;
 mod cmd;
 
 use tiny::*;
-use tiny::palette::standard as pal;
+use tiny::palette::dawn_bringer as pal;
 
 use std::path::Path;
 
@@ -43,13 +43,18 @@ impl Application for App {
       let mut y = 0;      
       for color in 0..32 {
          let r = Rect::new_size(x, y, bw, bh);
-         //let txt = self.font.measure(&names[color]);
+         let txt = self.font.measure(&names[color]);
 
          painter.clip(Some(r));
          painter.rect_fill(r, color as u8);
 
          let text_color = if color as u8 == pal::WHITE { pal::BLACK } else { pal::WHITE };
-         painter.text(r.left + 1, r.top + 1, &names[color], text_color, &self.font);
+
+         let txt_x = r.width() / 2 - txt.width() / 2;
+         let txt_y = r.height() / 2 - txt.height() / 2;
+
+         //painter.text(r.left + 1, r.top + 1, &names[color], text_color, &self.font);
+         painter.text(r.left + txt_x, r.top + txt_y, &names[color], text_color, &self.font);
 
          x += bw;
          if x >= 320 {

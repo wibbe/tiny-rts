@@ -333,7 +333,7 @@ impl Font {
    pub fn measure(&self, text: &str) -> Rect {
       let mut x_curr = 0;
       let mut x_max = 0;
-      let mut y_max = 0;
+      let mut y_max = self.char_height;
 
       for ch in text.chars() {
          let idx = ch as u32;
