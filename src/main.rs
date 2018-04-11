@@ -8,6 +8,7 @@ use std::path::Path;
 
 
 struct App {
+   game: Box<game::Game>,
    font: tiny::Font,
    red:  u8,
 }
@@ -18,6 +19,7 @@ impl tiny::Application for App {
       let font_bitmap = tiny::Bitmap::load(ctx, Path::new("res/font.png")).unwrap();
 
       Ok(App {
+         game: Box::new(game::Game::new()),
          font: tiny::Font::new(font_bitmap, 4, 7),
          red: ctx.palette_add(tiny::Color::new(255, 0, 0, 255)),
       })
