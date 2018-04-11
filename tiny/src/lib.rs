@@ -7,8 +7,10 @@ mod platform {
    pub use self::glutin_window::*;
 }
 
-pub mod palette;
 mod bitmap;
+
+pub mod palette;
+pub mod font;
 
 pub use bitmap::*;
 
