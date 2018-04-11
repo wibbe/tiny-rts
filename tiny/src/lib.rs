@@ -7,6 +7,10 @@ mod platform {
 }
 
 mod bitmap;
+
+pub mod palette;
+pub mod font;
+
 pub use bitmap::*;
 
 use std::cell::RefCell;
@@ -330,7 +334,7 @@ impl Font {
    pub fn measure(&self, text: &str) -> Rect {
       let mut x_curr = 0;
       let mut x_max = 0;
-      let mut y_max = 0;
+      let mut y_max = self.char_height;
 
       for ch in text.chars() {
          let idx = ch as u32;
@@ -355,7 +359,7 @@ impl Font {
    }
 }
 
-struct Palette {
+pub struct Palette {
    colors: Vec<Color>,
 }
 
@@ -389,8 +393,7 @@ pub const DRAW_FLIP_H: u32 = (1 << 1);
 pub const DRAW_MASK: u32 = (1 << 2);
 
 pub trait Painter {
-   fn clip_reset(&self);
-   fn clip_set(&self, rect: Rect);
+   fn clip(&self, rect: Option<Rect>);
 
    fn clear(&self, color: u8);
 
@@ -407,7 +410,7 @@ pub trait Painter {
 }
 
 pub trait Application : Sized {
-   fn new(ctx: &Context) -> Result<Self, String>;
+   fn new(ctx: &mut Context) -> Result<Self, String>;
 
    fn step(&mut self, ctx: &Context) -> bool { !ctx.key_pressed(Key::Escape) }
    fn paint(&self, painter: &Painter);
@@ -450,6 +453,10 @@ impl Context {
       }
    }
 
+   pub fn set_palette(&mut self, palette: Palette) {
+      *self.palette.borrow_mut() = palette;
+   }
+
    pub fn palette_add(&self, color: Color) -> u8 {
        self.palette.borrow_mut().add_color(color)
    }
@@ -460,6 +467,10 @@ impl Context {
 
    pub fn key_pressed(&self, key: Key) -> bool {
        self.window.key_state[key as usize] && self.window.key_delta[key as usize]
+   }
+
+   pub fn mouse_position(&self) -> (u32, u32) {
+      (self.window.mouse_x, self.window.mouse_y)
    }
 
    pub fn set_background_color(&mut self, color: Color) {
@@ -496,7 +507,7 @@ pub fn run<T: Application>(title: &str, width: u32, height: u32, scale: u32) -> 
    };
 
    // Initialize the application
-   let mut app = match T::new(&context) {
+   let mut app = match T::new(&mut context) {
       Ok(app) => app,
       Err(err) => return Err(err),
    };

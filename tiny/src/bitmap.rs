@@ -48,6 +48,26 @@ impl Bitmap {
       }
    }
 
+   pub fn from_bitmask(mask: &[u8], width: u32, height: u32) -> Bitmap {
+      let mut pixels = Vec::new();
+
+      for p in mask {
+         let mut pixel = *p;
+         for _ in 0..8 {
+            let d:u8 = if (pixel & 0b1000000) > 0 { 1 } else { 0 };
+            pixels.push(d);
+
+            pixel = pixel << 1;
+         }
+      }
+
+      Bitmap {
+         pixels: RefCell::new(pixels),
+         width: width,
+         height: height,
+      }
+   }
+
    #[inline]
    pub fn pixel(&self, x: u32, y: u32) -> u8 {
       self.pixels.borrow()[(self.width * y + x) as usize]
@@ -73,12 +93,11 @@ impl<'a> BitmapPainter<'a> {
 }
 
 impl<'a> Painter for BitmapPainter<'a> {
-   fn clip_reset(&self) {
-      *self.clip.borrow_mut() = Rect::new_size(0, 0, self.target.width as i32, self.target.height as i32);
-   }
-
-   fn clip_set(&self, rect: Rect) {
-      *self.clip.borrow_mut() = rect.fit(0, 0, self.target.width as i32, self.target.height as i32);
+   fn clip(&self, rect: Option<Rect>) {
+      match rect {
+         Some(r) => *self.clip.borrow_mut() = r.fit(0, 0, self.target.width as i32, self.target.height as i32),
+         None => *self.clip.borrow_mut() = Rect::new_size(0, 0, self.target.width as i32, self.target.height as i32),
+      }
    }
 
    fn clear(&self, color: u8) {
@@ -95,7 +114,7 @@ impl<'a> Painter for BitmapPainter<'a> {
    }
 
    fn rect_stroke(&self, rect: Rect, color: u8) {
-      self.line(rect.left, rect.top, rect.right + 1, rect.top, color);
+      self.line(rect.left, rect.top, rect.right+ 1, rect.top, color);
       self.line(rect.left, rect.bottom, rect.right + 1, rect.bottom, color);
       self.line(rect.left, rect.top, rect.left, rect.bottom, color);
       self.line(rect.right, rect.top, rect.right, rect.bottom, color);

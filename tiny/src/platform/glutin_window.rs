@@ -21,6 +21,9 @@ pub struct Window {
    pub key_state: [bool; 256],
    pub key_delta: [bool; 256],
 
+   pub mouse_x: u32,
+   pub mouse_y: u32,
+
    canvas_buffer: Vec<u32>,
    canvas_width: u32,
    canvas_height: u32,
@@ -41,8 +44,8 @@ impl Window {
       let events_loop = Box::new(glutin::EventsLoop::new());
       let window = glutin::WindowBuilder::new()
          .with_dimensions(window_width, window_height)
-         .with_min_dimensions(window_width, window_height)
-         .with_max_dimensions(window_width, window_height)
+         //.with_min_dimensions(window_width, window_height)
+         //.with_max_dimensions(window_width, window_height)
          .with_title(config.title.to_string())
          .with_visibility(true);
 
@@ -72,6 +75,22 @@ impl Window {
          gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER as u32, gl::NEAREST as i32);
       }
 
+      gl_window.show();
+      gl_window.resize(window_width, window_height);
+
+      // Restrict the size of the window
+      if let Some((w, h)) = gl_window.get_outer_size() {
+         println!("Outer size {}x{}", w, h);
+         gl_window.set_min_dimensions(Some((w, h)));
+         gl_window.set_max_dimensions(Some((w, h)));
+      }
+
+
+      if let Some((w, h)) = gl_window.get_inner_size() {
+         println!("Window size: {}x{} ({}x{})", w, h, window_width, window_height);
+      }
+
+
       Ok(Window { 
          events_loop: events_loop,
          window: gl_window,
@@ -80,6 +99,9 @@ impl Window {
 
          key_state: [false; 256],
          key_delta: [false; 256],
+
+         mouse_x: 0,
+         mouse_y: 0,
 
          canvas_buffer: canvas_buffer,
          canvas_tex: canvas_tex,
@@ -138,7 +160,7 @@ impl Window {
          gl::BindTexture(gl::TEXTURE_2D, self.canvas_tex);
          gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGBA as i32, self.canvas_width as i32, self.canvas_height as i32, 0, gl::RGBA, gl::UNSIGNED_BYTE, mem::transmute(self.canvas_buffer.as_ptr()));
 
-        gl::Begin(gl::QUADS);
+         gl::Begin(gl::QUADS);
             gl::TexCoord2f(0.0, 0.0);
             gl::Vertex2f(0.0, 0.0);
 
@@ -154,7 +176,7 @@ impl Window {
       }
 
       if let Err(err) = self.window.swap_buffers() {
-         return Err("Could not swap window buffer".to_string());
+         return Err(format!("Could not swap window buffer: {}", err).to_string());
       }
 
       Ok(())
@@ -170,6 +192,12 @@ impl Window {
       let window = &mut self.window;
       let key_state = &mut self.key_state;
       let key_delta = &mut self.key_delta;
+      let window_width = &mut self.window_width;
+      let window_height = &mut self.window_height;
+      let canvas_width = self.canvas_width;
+      let canvas_height = self.canvas_height;
+      let mouse_x = &mut self.mouse_x;
+      let mouse_y = &mut self.mouse_y;
 
       events_loop.poll_events(|event| {
          match event {
@@ -177,7 +205,11 @@ impl Window {
                glutin::WindowEvent::Closed => running = false,
                
                glutin::WindowEvent::Resized(w, h) => {
+                  *window_width = w;
+                  *window_height = h;
                   window.resize(w, h);
+
+                  println!("Resized {}x{}", w, h);
                },
 
                glutin::WindowEvent::KeyboardInput { input, .. } => {
@@ -195,6 +227,11 @@ impl Window {
                         },              
                      }
                   }
+               },
+
+               glutin::WindowEvent::CursorMoved { position, .. } => {
+                  *mouse_x = ((position.0 / *window_width as f64) * canvas_width as f64) as u32;
+                  *mouse_y = ((position.1 / *window_height as f64) * canvas_height as f64) as u32;
                },
 
                _ => (),
