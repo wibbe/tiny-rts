@@ -32,13 +32,25 @@ fn generate_default_font() {
    let mut current = 0;
    let mut count = 0;
 
+   println!("cargo:rerun-if-changed={}", in_path.display());
+
+   let out = File::create(&out_path).unwrap();
+   let mut out = LineWriter::new(out);
+
+   write!(out, "// ").unwrap();
+
    for (x, y, pixel) in img.pixels() {
       let pixel = if pixel[3] > 0 { 1 } else { 0 };
       current = (current << 1) | pixel;
 
+      write!(out, "{}", pixel).unwrap();
+
       count += 1;
       if count == 8 {
          data.push(current as u8);
+
+         writeln!(out, "- {:b}", current).unwrap();
+         write!(out, "// ").unwrap();
 
          count = 0;
          current = 0;
@@ -49,19 +61,20 @@ fn generate_default_font() {
 
    if count > 0 {
       data.push(current);
+      writeln!(out, "- {:b}", current).unwrap();
    }
 
-   println!("cargo:rerun-if-changed={}", in_path.display());
 
-   let out = File::create(&out_path).unwrap();
-   let mut out = LineWriter::new(out);
 
    let (w, h) = img.dimensions();
 
    // Generate output file
+   writeln!(out, "").unwrap();
    writeln!(out, "pub const DEFAULT_FONT_WIDTH: u32 = {};", w).unwrap();
    writeln!(out, "pub const DEFAULT_FONT_HEIGHT: u32 = {};", h).unwrap();
-   writeln!(out, "pub static DEAFULT_FONT_DATA: [u8; {}] = [", data.len()).unwrap();
+   writeln!(out, "pub const DEFAULT_CHAR_WIDTH: u32 = {};", 4).unwrap();
+   writeln!(out, "pub const DEFAULT_CHAR_HEIGHT: u32 = {};", 7).unwrap();
+   writeln!(out, "pub static DEFAULT_FONT_DATA: [u8; {}] = [", data.len()).unwrap();
 
    let mut count = 0;
    for pixel in data {

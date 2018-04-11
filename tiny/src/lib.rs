@@ -359,6 +359,8 @@ impl Font {
    }
 }
 
+
+#[derive(Clone)]
 pub struct Palette {
    colors: Vec<Color>,
 }
@@ -455,6 +457,10 @@ impl Context {
 
    pub fn set_palette(&mut self, palette: Palette) {
       *self.palette.borrow_mut() = palette;
+   }
+
+   pub fn palette(&self) -> Palette {
+      self.palette.borrow().clone()
    }
 
    pub fn palette_add(&self, color: Color) -> u8 {

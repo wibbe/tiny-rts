@@ -54,7 +54,7 @@ impl Bitmap {
       for p in mask {
          let mut pixel = *p;
          for _ in 0..8 {
-            let d:u8 = if (pixel & 0b1000000) > 0 { 1 } else { 0 };
+            let d: u8 = if (pixel & 0b10000000) > 0 { 1 } else { 0 };
             pixels.push(d);
 
             pixel = pixel << 1;

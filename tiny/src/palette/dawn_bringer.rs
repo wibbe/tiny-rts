@@ -1,42 +1,43 @@
 
 use super::super::*;
 
-pub const BLACK: u8 = 0;
-pub const VALHALLA: u8 = 1;
-pub const LOULOU: u8 = 2;
-pub const OILED_CEDAR: u8 = 3;
-pub const ROPE: u8 = 4;
-pub const TAHITI_GOLD: u8 = 5;
-pub const TWINE: u8 = 6;
-pub const PANCHO: u8 = 7;
-pub const GOLDEN_FIZZ: u8 = 8;
-pub const ATLANTIS: u8 = 9;
-pub const CHRISTI: u8 = 10;
-pub const ELF_GREEN: u8 = 11;
-pub const DELL: u8 = 12;
-pub const VERDIGRIS: u8 = 13;
-pub const OPAL: u8 = 14;
-pub const DEEP_KOAMARU: u8 = 15;
-pub const VENICE_BLUE: u8 = 16;
-pub const ROYAL_BLUE: u8 = 17;
-pub const CORNFLOWER: u8 = 18;
-pub const VIKING: u8 = 19;
-pub const LIGHT_STEEL_BLUE: u8 = 20;
-pub const WHITE: u8 = 21;
-pub const HEATHER: u8 = 22;
-pub const TOPAZ: u8 = 23;
-pub const DIM_GRAY: u8 = 24;
-pub const SMOKEY_ASH: u8 = 25;
-pub const CLAIRVOYANT: u8 = 26;
-pub const BROWN: u8 = 27;
-pub const MANDY: u8 = 28;
-pub const PLUM: u8 = 29;
-pub const RAIN_FOREST: u8 = 30;
-pub const STINGE: u8 = 31;
+pub const BLACK: u8 = 1;
+pub const VALHALLA: u8 = 2;
+pub const LOULOU: u8 = 3;
+pub const OILED_CEDAR: u8 = 4;
+pub const ROPE: u8 = 5;
+pub const TAHITI_GOLD: u8 = 6;
+pub const TWINE: u8 = 7;
+pub const PANCHO: u8 = 8;
+pub const GOLDEN_FIZZ: u8 = 9;
+pub const ATLANTIS: u8 = 10;
+pub const CHRISTI: u8 = 12;
+pub const ELF_GREEN: u8 = 12;
+pub const DELL: u8 = 13;
+pub const VERDIGRIS: u8 = 14;
+pub const OPAL: u8 = 15;
+pub const DEEP_KOAMARU: u8 = 16;
+pub const VENICE_BLUE: u8 = 17;
+pub const ROYAL_BLUE: u8 = 18;
+pub const CORNFLOWER: u8 = 19;
+pub const VIKING: u8 = 20;
+pub const LIGHT_STEEL_BLUE: u8 = 21;
+pub const WHITE: u8 = 22;
+pub const HEATHER: u8 = 23;
+pub const TOPAZ: u8 = 24;
+pub const DIM_GRAY: u8 = 25;
+pub const SMOKEY_ASH: u8 = 26;
+pub const CLAIRVOYANT: u8 = 27;
+pub const BROWN: u8 = 28;
+pub const MANDY: u8 = 29;
+pub const PLUM: u8 = 30;
+pub const RAIN_FOREST: u8 = 31;
+pub const STINGE: u8 = 32;
 
 pub fn create_palette() -> Palette {
    Palette {
       colors: vec![
+         Color::new(0, 0, 0, 0),
          Color::new(0, 0, 0, 255),
          Color::new(34, 32, 52, 255),
          Color::new(69, 40, 60, 255),
@@ -75,6 +76,7 @@ pub fn create_palette() -> Palette {
 
 pub fn names() -> Vec<String> {
    vec![
+      String::from("Transparent"),
       String::from("Black"),
       String::from("Valhalla"),
       String::from("Loulou"),
