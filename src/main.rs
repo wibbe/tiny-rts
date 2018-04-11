@@ -37,11 +37,13 @@ impl Application for App {
 
       let names = pal::names();
 
+      let bw = 80;
+      let bh = 25;
       let mut x = 0;
       let mut y = 0;      
       for color in 0..32 {
-         let r = Rect::new_size(x, y, 40, 40);
-         let txt = self.font.measure(&names[color]);
+         let r = Rect::new_size(x, y, bw, bh);
+         //let txt = self.font.measure(&names[color]);
 
          painter.clip(Some(r));
          painter.rect_fill(r, color as u8);
@@ -49,10 +51,10 @@ impl Application for App {
          let text_color = if color as u8 == pal::WHITE { pal::BLACK } else { pal::WHITE };
          painter.text(r.left + 1, r.top + 1, &names[color], text_color, &self.font);
 
-         x += 40;
+         x += bw;
          if x >= 320 {
             x = 0;
-            y += 40;
+            y += bh;
          }
       }
    }
