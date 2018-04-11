@@ -48,6 +48,26 @@ impl Bitmap {
       }
    }
 
+   pub fn from_bitmask(mask: &[u8], width: u32, height: u32) -> Bitmap {
+      let mut pixels = Vec::new();
+
+      for p in mask {
+         let mut pixel = *p;
+         for _ in 0..8 {
+            let d:u8 = if (pixel & 0b1000000) > 0 { 1 } else { 0 };
+            pixels.push(d);
+
+            pixel = pixel << 1;
+         }
+      }
+
+      Bitmap {
+         pixels: RefCell::new(pixels),
+         width: width,
+         height: height,
+      }
+   }
+
    #[inline]
    pub fn pixel(&self, x: u32, y: u32) -> u8 {
       self.pixels.borrow()[(self.width * y + x) as usize]

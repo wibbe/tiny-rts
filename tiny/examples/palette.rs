@@ -3,12 +3,14 @@ extern crate tiny;
 
 use tiny::*;
 use tiny::palette::dawn_bringer as pal;
+use tiny::font;
 
 use std::path::Path;
 
 struct App {
 //   font: Font,
    mouse_pos: (u32, u32),
+   f: Bitmap,
 }
 
 
@@ -21,6 +23,7 @@ impl Application for App {
       Ok(App {
  //        font: tiny::Font::new(font_bitmap, 4, 7),
          mouse_pos: (0, 0),
+         f: font::default_font_bitmap(),
       })
    }
    
@@ -33,6 +36,8 @@ impl Application for App {
    fn paint(&self, painter: &tiny::Painter) {
       painter.clear(pal::BLACK);
 
+      painter.blit(20, 20, &self.f, Rect::new(0, 0, 64, 56), tiny::DRAW_MASK, pal::WHITE);
+/*
       let names = pal::names();
 
       let bw = 80;
@@ -60,6 +65,7 @@ impl Application for App {
             y += bh;
          }
       }
+*/
    }
 }
 

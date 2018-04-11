@@ -56,11 +56,14 @@ fn generate_default_font() {
    let out = File::create(&out_path).unwrap();
    let mut out = LineWriter::new(out);
 
+   let (w, h) = img.dimensions();
+
    // Generate output file
-   writeln!(out, "pub static DEAFULT_FONT_DATA: [u8; {}] = {{", data.len()).unwrap();
+   writeln!(out, "pub const DEFAULT_FONT_WIDTH: u32 = {};", w).unwrap();
+   writeln!(out, "pub const DEFAULT_FONT_HEIGHT: u32 = {};", h).unwrap();
+   writeln!(out, "pub static DEAFULT_FONT_DATA: [u8; {}] = [", data.len()).unwrap();
 
    let mut count = 0;
-   let mut line = String::new();
    for pixel in data {
       if count == 0 {
          out.write(b"  ").unwrap();
@@ -76,7 +79,7 @@ fn generate_default_font() {
       }
    }
 
-   writeln!(out, "}}").unwrap();
+   writeln!(out, "];").unwrap();
 }
 
 fn main() {
