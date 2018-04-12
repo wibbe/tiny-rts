@@ -9,5 +9,5 @@ pub fn default_font_bitmap() -> Bitmap {
 }
 
 pub fn default_font() -> Font {
-	Font::new(default_font_bitmap(), DEFAULT_CHAR_WIDTH, DEFAULT_CHAR_HEIGHT)
+	Font::new(default_font_bitmap(), DEFAULT_CHAR_WIDTH, DEFAULT_CHAR_HEIGHT, DEFAULT_LINE_HEIGHT)
 }

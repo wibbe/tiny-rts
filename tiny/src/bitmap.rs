@@ -214,7 +214,7 @@ impl<'a> Painter for BitmapPainter<'a> {
                '\t' => x_curr += font.char_width,
                '\n' => {
                   x_curr = x;
-                  y_curr += (font.char_height as f32 * 1.5) as i32;
+                  y_curr += font.line_height;
                },
                _ => {
                   self.blit(x_curr, y_curr, &font.bitmap, Rect::new_size(ch_x * font.char_width, ch_y * font.char_height, font.char_width, font.char_height), DRAW_MASK, color);

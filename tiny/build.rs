@@ -60,6 +60,7 @@ fn generate_default_font() {
    writeln!(out, "pub const DEFAULT_FONT_HEIGHT: u32 = {};", h).unwrap();
    writeln!(out, "pub const DEFAULT_CHAR_WIDTH: u32 = {};", 4).unwrap();
    writeln!(out, "pub const DEFAULT_CHAR_HEIGHT: u32 = {};", 7).unwrap();
+   writeln!(out, "pub const DEFAULT_LINE_HEIGHT: u32 = {};", 9).unwrap();
    writeln!(out, "pub static DEFAULT_FONT_DATA: [u8; {}] = [", data.len()).unwrap();
 
    let mut count = 0;

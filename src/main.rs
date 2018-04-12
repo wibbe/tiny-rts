@@ -8,24 +8,24 @@ use tiny::*;
 use tiny::font;
 use tiny::palette::dawn_bringer as pal;
 
-use std::path::Path;
 
 
 struct App {
    game: Box<game::Game>,
    font: Font,
+   show_profiling: bool,
    mouse_pos: (u32, u32),
 }
 
 
 impl Application for App {
    fn new(ctx: &mut tiny::Context) -> Result<App, String> {
-
       ctx.set_palette(pal::create_palette());
 
       Ok(App {
          game: Box::new(game::Game::new()),
          font: font::default_font(),
+         show_profiling: false,
          mouse_pos: (0, 0),
       })
    }
@@ -37,10 +37,14 @@ impl Application for App {
          println!("Left Mouse Clicked");
       }
 
+      if ctx.key_pressed(tiny::Key::F1) {
+         self.show_profiling = !self.show_profiling;
+      }
+
       !ctx.key_down(tiny::Key::Escape)
    }
 
-   fn paint(&self, painter: &tiny::Painter) {
+   fn paint(&self, ctx: &tiny::Context, painter: &tiny::Painter) {
       painter.clear(pal::BLACK);
 
       let names = pal::names();
@@ -49,7 +53,7 @@ impl Application for App {
       let bh = 25;
       let mut x = 0;
       let mut y = 0;      
-      for color in 0..32 {
+      for color in 1..33 {
          let r = Rect::new_size(x, y, bw, bh);
          let txt = self.font.measure(&names[color]);
 
@@ -60,8 +64,6 @@ impl Application for App {
 
          let txt_x = r.width() / 2 - txt.width() / 2;
          let txt_y = r.height() / 2 - txt.height() / 2;
-
-         //painter.text(r.left + 1, r.top + 1, &names[color], text_color, &self.font);
          painter.text(r.left + txt_x, r.top + txt_y, &names[color], text_color, &self.font);
 
          x += bw;
@@ -69,6 +71,10 @@ impl Application for App {
             x = 0;
             y += bh;
          }
+      }
+
+      if self.show_profiling {
+         ctx.draw_timing(painter, &self.font, pal::VALHALLA, pal::WHITE);
       }
    }
 }

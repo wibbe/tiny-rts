@@ -9,11 +9,14 @@ pub struct Pos(u32, u32);
 
 #[derive(Copy, Clone)]
 pub struct Unit {
+	next_free: Option<usize>,
 }
 
 impl Default for Unit {
 	fn default() -> Unit {
-		Unit {}
+		Unit {
+			next_free: None,
+		}
 	}
 }
 
@@ -55,9 +58,15 @@ pub struct Game {
 
 impl Game {
 	pub fn new() -> Game {
-		Game {
+		let mut game = Game {
 			map: Default::default(),
 			units: [Default::default(); MAX_UNITS],
+		};
+
+		for i in 0..(MAX_UNITS - 1) {
+			game.units[i].next_free = Some(i + 1);
 		}
+
+		game
 	}
 }

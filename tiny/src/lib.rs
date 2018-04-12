@@ -327,14 +327,16 @@ pub struct Font {
     pub bitmap: Bitmap,
     pub char_width: i32,
     pub char_height: i32,
+    pub line_height: i32,
 }
 
 impl Font {
-   pub fn new(bitmap: Bitmap, char_width: u32, char_height: u32) -> Font {
+   pub fn new(bitmap: Bitmap, char_width: u32, char_height: u32, line_height: u32) -> Font {
       Font {
          bitmap: bitmap,
          char_width: char_width as i32,
          char_height: char_height as i32,
+         line_height: line_height as i32,
       }
    }
 
@@ -351,7 +353,7 @@ impl Font {
                '\t' => x_curr += self.char_width,
                '\n' => {
                   x_curr = 0;
-                  y_max += (self.char_height as f32 * 1.5) as i32;
+                  y_max += self.line_height;
                },
                _ => x_curr += self.char_width,
             }
@@ -422,7 +424,7 @@ pub trait Application : Sized {
    fn new(ctx: &mut Context) -> Result<Self, String>;
 
    fn step(&mut self, ctx: &Context) -> bool { !ctx.key_pressed(Key::Escape) }
-   fn paint(&self, painter: &Painter);
+   fn paint(&self, ctx: &Context, painter: &Painter);
 }
 
 
@@ -437,28 +439,25 @@ pub const WHITE: u8 = 2;
 
 pub struct Context {
    palette: RefCell<Palette>,
-   canvas: Bitmap,
    window: platform::Window,
-
-   pub show_performance: bool,
 
    pub frame_time: f64,
    pub step_time: f64,
    pub paint_time: f64,
    pub blit_time: f64,
+   pub sleep_time: f64,
 }
 
 impl Context {
    fn new(window: platform::Window, config: &Config) -> Context {
       Context {
          palette: RefCell::new(Palette::new()),
-         canvas: Bitmap::new(config.width, config.height),
          window: window,
-         show_performance: false,
          frame_time: 0.0,
          step_time: 0.0,
          paint_time: 0.0,
          blit_time: 0.0,
+         sleep_time: 0.0,
       }
    }
 
@@ -497,6 +496,17 @@ impl Context {
    pub fn set_background_color(&mut self, color: Color) {
       self.window.set_background_color(color);
    }
+
+   pub fn draw_timing(&self, painter: &Painter, font: &Font, background_color: u8, foreground_color: u8) {
+      let text = format!("FRAME: {:4.1} MS\nPAINT: {:4.1} MS\n STEP: {:4.1} MS\n BLIT: {:4.1} MS\nSLEEP: {:4.1} MS", self.frame_time, self.paint_time, self.step_time, self.blit_time, self.sleep_time);
+      let text_rect = font.measure(&text);
+      let background_rect = text_rect.tr(2, 2).grow(4, 4);
+
+      painter.clip(Some(background_rect));
+      painter.rect_fill(background_rect, background_color);
+      painter.text(background_rect.left + 2, background_rect.top + 2, &text, foreground_color, font);
+      painter.clip(None);
+   }
 }
 
 
@@ -527,6 +537,8 @@ pub fn run<T: Application>(title: &str, width: u32, height: u32, scale: u32) -> 
       Err(err) => return Err(err),
    };
 
+   let mut canvas = Bitmap::new(config.width, config.height);
+
    // Initialize the application
    let mut app = match T::new(&mut context) {
       Ok(app) => app,
@@ -536,6 +548,12 @@ pub fn run<T: Application>(title: &str, width: u32, height: u32, scale: u32) -> 
    context.window.show();
 
    let target_frame_time = 33_333_333u32; // An fps of 30Hz
+
+   let mut step_time;
+   let mut paint_time = 0.0;
+   let mut blit_time = 0.0;
+   let mut frame_time = 0.0;
+   let mut sleep_time = 0.0;
 
    // Main loop
    'main: loop {
@@ -549,38 +567,48 @@ pub fn run<T: Application>(title: &str, width: u32, height: u32, scale: u32) -> 
       {  // Step the application
          let step_now = Instant::now();
          
-         if !app.step(&mut context) {
+         if !app.step(&context) {
              break 'main;
          }
 
-         context.step_time = to_milisec(step_now.elapsed());
+         step_time = to_milisec(step_now.elapsed());
       }
 
       {  // Let the application paint to the canvas
          let paint_now = Instant::now();
 
-         let p = BitmapPainter::new(&mut context.canvas);
-         app.paint(&p);
+         let p = BitmapPainter::new(&mut canvas);
+         app.paint(&context, &p);
 
-         context.paint_time = to_milisec(paint_now.elapsed());
+         paint_time = to_milisec(paint_now.elapsed());
       }
 
       {  // Blit canvas to the window
          let blit_now = Instant::now();
 
-         if let Err(err) = context.window.paint(&context.canvas, &context.palette.borrow_mut().colors) {
+         if let Err(err) = context.window.paint(&canvas, &context.palette.borrow_mut().colors) {
             return Err(err);            
          }
 
-         context.blit_time = to_milisec(blit_now.elapsed());
+         blit_time = to_milisec(blit_now.elapsed());
       }
 
       let frame_duration = frame_now.elapsed();
-      context.frame_time = to_milisec(frame_duration);
+      frame_time = to_milisec(frame_duration);
+
+      context.step_time = context.step_time * 0.98 + step_time * 0.02;
+      context.paint_time = context.paint_time * 0.98 + paint_time * 0.02;
+      context.blit_time = context.blit_time * 0.98 + blit_time * 0.02;
+      context.frame_time = context.frame_time * 0.98 + frame_time * 0.02;
 
       // Sleep to force the frame time to 33ms
       if frame_duration.as_secs() == 0 && frame_duration.subsec_nanos() < target_frame_time {
-         thread::sleep(Duration::new(0, target_frame_time - frame_duration.subsec_nanos()));
+         let sleep_duration = Duration::new(0, target_frame_time - frame_duration.subsec_nanos());
+         
+         sleep_time = to_milisec(sleep_duration);
+         context.sleep_time = context.sleep_time * 0.98 + sleep_time * 0.02;
+         
+         thread::sleep(sleep_duration);
       }
    }
 
