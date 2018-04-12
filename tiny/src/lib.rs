@@ -176,6 +176,13 @@ pub enum Key {
    Yen,
 }
 
+#[derive(Copy, Clone, PartialEq)]
+pub enum Mouse {
+   Left,
+   Right,
+   Middle,
+}
+
 
 #[derive(Copy, Clone, PartialEq)]
 pub struct Rect {
@@ -473,6 +480,14 @@ impl Context {
 
    pub fn key_pressed(&self, key: Key) -> bool {
        self.window.key_state[key as usize] && self.window.key_delta[key as usize]
+   }
+
+   pub fn mouse_down(&self, mouse: Mouse) -> bool {
+      self.window.mouse_state[mouse as usize]
+   }
+
+   pub fn mouse_pressed(&self, mouse: Mouse) -> bool {
+       self.window.mouse_state[mouse as usize] && self.window.mouse_delta[mouse as usize]
    }
 
    pub fn mouse_position(&self) -> (u32, u32) {

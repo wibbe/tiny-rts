@@ -1,6 +1,7 @@
 
 use super::super::*;
 
+pub const TRANSPARENT: u8 = 0;
 pub const BLACK: u8 = 1;
 pub const VALHALLA: u8 = 2;
 pub const LOULOU: u8 = 3;

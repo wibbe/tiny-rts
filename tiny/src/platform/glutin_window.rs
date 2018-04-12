@@ -21,6 +21,9 @@ pub struct Window {
    pub key_state: [bool; 256],
    pub key_delta: [bool; 256],
 
+   pub mouse_state: [bool; 3],
+   pub mouse_delta: [bool; 3],
+
    pub mouse_x: u32,
    pub mouse_y: u32,
 
@@ -99,6 +102,9 @@ impl Window {
 
          key_state: [false; 256],
          key_delta: [false; 256],
+
+         mouse_state: [false; 3],
+         mouse_delta: [false; 3],
 
          mouse_x: 0,
          mouse_y: 0,
@@ -187,11 +193,14 @@ impl Window {
       //let window = &self.window;
 
       unsafe { ptr::write_bytes::<bool>(self.key_delta.as_mut_ptr(), 0, 256); }
+      unsafe { ptr::write_bytes::<bool>(self.mouse_delta.as_mut_ptr(), 0, 3); }
 
       let events_loop = &mut self.events_loop;
       let window = &mut self.window;
       let key_state = &mut self.key_state;
       let key_delta = &mut self.key_delta;
+      let mouse_state = &mut self.mouse_state;
+      let mouse_delta = &mut self.mouse_delta;
       let window_width = &mut self.window_width;
       let window_height = &mut self.window_height;
       let canvas_width = self.canvas_width;
@@ -222,6 +231,28 @@ impl Window {
                         glutin::ElementState::Released => {
                            key_state[key as usize] = false;
                            key_delta[key as usize] = true;
+                        },              
+                     }
+                  }
+               },
+
+               glutin::WindowEvent::MouseInput { state, button, .. } => {
+                  let button = match button {
+                     glutin::MouseButton::Left => Some(Mouse::Left),
+                     glutin::MouseButton::Right => Some(Mouse::Right),
+                     glutin::MouseButton::Middle => Some(Mouse::Middle),
+                     _ => None,
+                  };
+
+                  if let Some(button) = button {
+                     match state {
+                        glutin::ElementState::Pressed => {
+                           mouse_state[button as usize] = true;
+                           mouse_delta[button as usize] = true;
+                        },
+                        glutin::ElementState::Released => {
+                           mouse_state[button as usize] = false;
+                           mouse_delta[button as usize] = true;
                         },              
                      }
                   }

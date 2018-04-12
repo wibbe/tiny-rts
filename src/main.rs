@@ -5,6 +5,7 @@ mod cmd;
 mod game;
 
 use tiny::*;
+use tiny::font;
 use tiny::palette::dawn_bringer as pal;
 
 use std::path::Path;
@@ -19,19 +20,22 @@ struct App {
 
 impl Application for App {
    fn new(ctx: &mut tiny::Context) -> Result<App, String> {
-      let font_bitmap = tiny::Bitmap::load(ctx, Path::new("res/font.png")).unwrap();
 
       ctx.set_palette(pal::create_palette());
 
       Ok(App {
          game: Box::new(game::Game::new()),
-         font: tiny::Font::new(font_bitmap, 4, 7),
+         font: font::default_font(),
          mouse_pos: (0, 0),
       })
    }
    
    fn step(&mut self, ctx: &tiny::Context) -> bool {
       self.mouse_pos = ctx.mouse_position();
+
+      if ctx.mouse_pressed(tiny::Mouse::Left) {
+         println!("Left Mouse Clicked");
+      }
 
       !ctx.key_down(tiny::Key::Escape)
    }
