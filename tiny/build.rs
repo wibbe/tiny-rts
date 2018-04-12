@@ -34,41 +34,27 @@ fn generate_default_font() {
 
    println!("cargo:rerun-if-changed={}", in_path.display());
 
-   let out = File::create(&out_path).unwrap();
-   let mut out = LineWriter::new(out);
-
-   write!(out, "// ").unwrap();
-
-   for (x, y, pixel) in img.pixels() {
+   for (_, _, pixel) in img.pixels() {
       let pixel = if pixel[3] > 0 { 1 } else { 0 };
       current = (current << 1) | pixel;
-
-      write!(out, "{}", pixel).unwrap();
 
       count += 1;
       if count == 8 {
          data.push(current as u8);
 
-         writeln!(out, "- {:b}", current).unwrap();
-         write!(out, "// ").unwrap();
-
          count = 0;
          current = 0;
       }
-      //let color = ctx.palette_add(Color::new(pixel[0], pixel[1], pixel[2], pixel[3]));
-      //pixels[(x + y * w) as usize] = color;
    }
 
    if count > 0 {
       data.push(current);
-      writeln!(out, "- {:b}", current).unwrap();
    }
 
-
-
-   let (w, h) = img.dimensions();
-
    // Generate output file
+   let out = File::create(&out_path).unwrap();
+   let mut out = LineWriter::new(out);
+
    writeln!(out, "").unwrap();
    writeln!(out, "pub const DEFAULT_FONT_WIDTH: u32 = {};", w).unwrap();
    writeln!(out, "pub const DEFAULT_FONT_HEIGHT: u32 = {};", h).unwrap();
@@ -82,7 +68,6 @@ fn generate_default_font() {
          out.write(b"  ").unwrap();
       }
 
-      //out.write(&format!(" {},", pixel)[..]).unwrap();
       write!(out, " {}, ", pixel).unwrap();
       count += 1;
 

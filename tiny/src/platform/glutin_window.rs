@@ -141,7 +141,7 @@ impl Window {
 
       unsafe {
          if let Err(err) = self.window.make_current() {
-            return Err("Could not make OpenGL context current".to_string());
+            return Err(format!("Could not make OpenGL context current: {}", err).to_string());
          }
 
          gl::ClearColor(self.background_color.redf(),
@@ -208,8 +208,6 @@ impl Window {
                   *window_width = w;
                   *window_height = h;
                   window.resize(w, h);
-
-                  println!("Resized {}x{}", w, h);
                },
 
                glutin::WindowEvent::KeyboardInput { input, .. } => {
