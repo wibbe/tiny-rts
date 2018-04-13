@@ -8,10 +8,12 @@ use tiny::*;
 use tiny::font;
 use tiny::palette::dawn_bringer as pal;
 
+use std::rc::{Rc};
 
 
 struct App {
-   game: Box<game::Game>,
+   game: Rc<game::Game>,
+   cmd: Rc<cmd::Cmd>,
    font: Font,
    show_profiling: bool,
    mouse_pos: (u32, u32),
@@ -22,8 +24,14 @@ impl Application for App {
    fn new(ctx: &mut tiny::Context) -> Result<App, String> {
       ctx.set_palette(pal::create_palette());
 
+      let mut cmd = Rc::new(cmd::Cmd::new());
+      let mut game = Rc::new(game::Game::new(cmd.clone()));
+
+      let mut show_profiling = cmd.register_var("show-profiling");
+
       Ok(App {
-         game: Box::new(game::Game::new()),
+         game: game,
+         cmd: cmd,
          font: font::default_font(),
          show_profiling: false,
          mouse_pos: (0, 0),

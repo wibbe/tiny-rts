@@ -1,5 +1,8 @@
 
 use tiny;
+use cmd;
+
+use std::rc::{Rc};
 
 const MAP_WIDTH: usize = 80;
 const MAP_HEIGHT: usize = 60;
@@ -35,7 +38,7 @@ impl Default for Cell {
 }
 
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Map {
 	cells: [Cell; MAP_WIDTH * MAP_HEIGHT],
 }
@@ -50,17 +53,19 @@ impl Default for Map {
 
 
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Game {
 	map: Map,
 	units: [Unit; MAX_UNITS],
+	cmd: Rc<cmd::Cmd>,
 }
 
 impl Game {
-	pub fn new() -> Game {
+	pub fn new(cmd: Rc<cmd::Cmd>) -> Game {
 		let mut game = Game {
 			map: Default::default(),
 			units: [Default::default(); MAX_UNITS],
+			cmd: cmd,
 		};
 
 		for i in 0..(MAX_UNITS - 1) {
