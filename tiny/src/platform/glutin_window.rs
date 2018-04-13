@@ -24,6 +24,8 @@ pub struct Window {
    pub mouse_state: [bool; 3],
    pub mouse_delta: [bool; 3],
 
+   pub text_input: Vec<char>,
+
    pub mouse_x: u32,
    pub mouse_y: u32,
 
@@ -102,6 +104,8 @@ impl Window {
 
          key_state: [false; 256],
          key_delta: [false; 256],
+
+         text_input: Vec::with_capacity(8),
 
          mouse_state: [false; 3],
          mouse_delta: [false; 3],
@@ -207,6 +211,10 @@ impl Window {
       let canvas_height = self.canvas_height;
       let mouse_x = &mut self.mouse_x;
       let mouse_y = &mut self.mouse_y;
+      let text_input = &mut self.text_input;
+
+      // Clear any previous text
+      text_input.clear();
 
       events_loop.poll_events(|event| {
          match event {
@@ -220,7 +228,11 @@ impl Window {
                },
 
                glutin::WindowEvent::ReceivedCharacter(ch) => {
-                  println!("Input: ({}) '{}'", ch as u32, ch);
+                  if !ch.is_control() {
+                     text_input.push(ch);
+
+                  }
+                  //println!("Input: ({}) '{}' is_alphanumeric: {} is_control: {} is_ascii: {} is_ascii_alphabetic: {} is_ascii_alphanumeric: {} is_ascii_punctuation: {}", ch as u32, ch, ch.is_alphanumeric(), ch.is_control(), ch.is_ascii(), ch.is_ascii_alphabetic(), ch.is_ascii_alphanumeric(), ch.is_ascii_punctuation());
                },
 
                glutin::WindowEvent::KeyboardInput { input, .. } => {

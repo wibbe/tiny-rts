@@ -404,6 +404,8 @@ pub const DRAW_FLIP_H: u32 = (1 << 1);
 pub const DRAW_MASK: u32 = (1 << 2);
 
 pub trait Painter {
+   fn size(&self) -> (u32, u32);
+
    fn clip(&self, rect: Option<Rect>);
 
    fn clear(&self, color: u8);
@@ -418,6 +420,7 @@ pub trait Painter {
    fn blit(&self, x: i32, y: i32, source: &Bitmap, source_rect: Rect, flags: u32, color: u8);
 
    fn text(&self, x: i32, y: i32, text: &str, color: u8, font: &Font);
+   fn char(&self, x: i32, y: i32, ch: char, color: u8, font: &Font) -> (i32, i32);
 }
 
 pub trait Application : Sized {
@@ -479,6 +482,10 @@ impl Context {
 
    pub fn key_pressed(&self, key: Key) -> bool {
        self.window.key_state[key as usize] && self.window.key_delta[key as usize]
+   }
+
+   pub fn text_input<'a>(&'a self) -> &'a Vec<char> {
+      &self.window.text_input
    }
 
    pub fn mouse_down(&self, mouse: Mouse) -> bool {

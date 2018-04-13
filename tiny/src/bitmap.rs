@@ -93,6 +93,10 @@ impl<'a> BitmapPainter<'a> {
 }
 
 impl<'a> Painter for BitmapPainter<'a> {
+   fn size(&self) -> (u32, u32) {
+      (self.target.width, self.target.height)
+   }
+
    fn clip(&self, rect: Option<Rect>) {
       match rect {
          Some(r) => *self.clip.borrow_mut() = r.fit(0, 0, self.target.width as i32, self.target.height as i32),
@@ -223,5 +227,32 @@ impl<'a> Painter for BitmapPainter<'a> {
             }
          }
       }
+   }
+
+   fn char(&self, x: i32, y: i32, ch: char, color: u8, font: &Font) -> (i32, i32) {
+      let mut dx = 0; 
+      let mut dy = 0;
+
+      let chars_per_row = font.bitmap.width / font.char_width as u32;
+
+      let idx = ch as u32;
+      if idx < 256 {
+         let ch_x = (idx % chars_per_row) as i32;
+         let ch_y = (idx / chars_per_row) as i32;
+
+         match ch {
+            ' ' => dx += font.char_width,
+            '\t' => dx += font.char_width,
+            '\n' => {
+               dy += font.line_height;
+            },
+            _ => {
+               self.blit(x, y, &font.bitmap, Rect::new_size(ch_x * font.char_width, ch_y * font.char_height, font.char_width, font.char_height), DRAW_MASK, color);
+               dx += font.char_width;
+            },
+         }
+      }
+
+      (dx, dy)
    }
 }

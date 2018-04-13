@@ -41,6 +41,8 @@ impl Application for App {
    fn step(&mut self, ctx: &tiny::Context) -> bool {
       self.mouse_pos = ctx.mouse_position();
 
+      self.cmd.step(ctx);
+
       if ctx.mouse_pressed(tiny::Mouse::Left) {
          println!("Left Mouse Clicked");
       }
@@ -48,6 +50,16 @@ impl Application for App {
       if ctx.key_pressed(tiny::Key::F1) {
          self.show_profiling = !self.show_profiling;
       }
+
+      {
+         let text_input = ctx.text_input();
+         if !text_input.is_empty() {
+            for ch in text_input.iter() {
+               println!("Text: {}", ch);
+            }
+         }
+      }
+
 
       !ctx.key_down(tiny::Key::Escape)
    }
@@ -84,6 +96,8 @@ impl Application for App {
       if self.show_profiling {
          ctx.draw_timing(painter, &self.font, pal::VALHALLA, pal::WHITE);
       }
+
+      self.cmd.paint(painter, &self.font, pal::VALHALLA, pal::WHITE);
    }
 }
 
