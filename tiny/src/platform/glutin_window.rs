@@ -219,6 +219,10 @@ impl Window {
                   window.resize(w, h);
                },
 
+               glutin::WindowEvent::ReceivedCharacter(ch) => {
+                  println!("Input: ({}) '{}'", ch as u32, ch);
+               },
+
                glutin::WindowEvent::KeyboardInput { input, .. } => {
                   if let Some(virtual_keycode) = input.virtual_keycode {
                      let key = keycode_glutin_to_tiny(virtual_keycode);
