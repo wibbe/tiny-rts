@@ -9,14 +9,16 @@ use std::collections::HashMap;
 pub struct Var(Rc<RefCell<i32>>);
 
 impl Var {
-   fn new() -> Var {
-      Var(Rc::new(RefCell::new(0)))
+   fn new(default_value: i32) -> Var {
+      Var(Rc::new(RefCell::new(default_value)))
    }
 
+   #[inline]
    pub fn set(&self, value: i32) {
       *self.0.borrow_mut() = value;
    }
 
+   #[inline]
    pub fn get(&self) -> i32 {
       *self.0.borrow()
    }
@@ -42,7 +44,7 @@ impl Cmd {
       }
    }
 
-   pub fn register_var(&self, name: &str) -> Result<Var, String> {
+   pub fn register_var(&self, name: &str, default_value: i32) -> Result<Var, String> {
       let mut vars = self.vars.borrow_mut();
 
       let name = name.to_string();
@@ -50,7 +52,7 @@ impl Cmd {
          return Err("Variable already pressent".to_string());
       }
 
-      let var = Var::new();
+      let var = Var::new(default_value);
       vars.insert(name, var.clone());
       Ok(var.clone())
    }

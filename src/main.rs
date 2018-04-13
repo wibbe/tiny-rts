@@ -27,7 +27,7 @@ impl Application for App {
       let mut cmd = Rc::new(cmd::Cmd::new());
       let mut game = Rc::new(game::Game::new(cmd.clone()));
 
-      let mut show_profiling = cmd.register_var("show-profiling");
+      let mut show_profiling = cmd.register_var("show-profiling", 0);
 
       Ok(App {
          game: game,
