@@ -36,15 +36,16 @@ impl Cmd {
       }
    }
 
-   pub fn register_var(&self, name: String) -> Result<(), String> {
+   pub fn register_var(&self, name: String) -> Result<Var, String> {
       let mut vars = self.vars.borrow_mut();
 
       if vars.contains_key(&name) {
          return Err("Variable already pressent".to_string());
       }
 
-      vars.insert(name, Var::new());
-      Ok(())
+      let var = Var::new();
+      vars.insert(name, var.clone());
+      Ok(var.clone())
    }
 
    pub fn register_func(&self, _name: String) -> Result<(), String> {
