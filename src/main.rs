@@ -5,7 +5,7 @@ mod cmd;
 mod game;
 
 use tiny::*;
-use tiny::font;
+use tiny::default_font;
 use tiny::palette::dawn_bringer as pal;
 
 use std::rc::{Rc};
@@ -15,7 +15,7 @@ struct App {
    game: Rc<game::Game>,
    cmd: Rc<cmd::Cmd>,
    font: Font,
-   show_profiling: bool,
+   show_console: bool,
    mouse_pos: (u32, u32),
 }
 
@@ -24,7 +24,19 @@ impl Application for App {
    fn new(ctx: &mut tiny::Context) -> Result<App, String> {
       ctx.set_palette(pal::create_palette());
 
-      let mut cmd = Rc::new(cmd::Cmd::new());
+      let font = default_font::default_font();
+
+      // Create command
+      let mut cmd = Rc::new(cmd::Cmd::new(cmd::Config {
+         font: font.clone(),
+         background_color: pal::VALHALLA,
+         foreground_color: pal::WHITE,
+         cursor_color: pal::CORNFLOWER,
+         lines: 10
+      }));
+
+      cmd.echo("Welcome to Tiny RTS".to_string());
+
       let mut game = Rc::new(game::Game::new(cmd.clone()));
 
       let mut show_profiling = cmd.register_var("show-profiling", 0);
@@ -32,8 +44,8 @@ impl Application for App {
       Ok(App {
          game: game,
          cmd: cmd,
-         font: font::default_font(),
-         show_profiling: false,
+         font: default_font::default_font(),
+         show_console: false,
          mouse_pos: (0, 0),
       })
    }
@@ -47,8 +59,8 @@ impl Application for App {
          println!("Left Mouse Clicked");
       }
 
-      if ctx.key_pressed(tiny::Key::F1) {
-         self.show_profiling = !self.show_profiling;
+      if ctx.key_pressed(tiny::Key::Tab) {
+         self.show_console = !self.show_console;
       }
 
       {
@@ -93,11 +105,11 @@ impl Application for App {
          }
       }
 
-      if self.show_profiling {
-         ctx.draw_timing(painter, &self.font, pal::VALHALLA, pal::WHITE);
+      if self.show_console {
+         self.cmd.paint(painter);
       }
 
-      self.cmd.paint(painter, &self.font, pal::VALHALLA, pal::WHITE);
+      //ctx.draw_timing(painter, &self.font, pal::VALHALLA, pal::WHITE);
    }
 }
 

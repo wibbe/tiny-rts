@@ -9,6 +9,7 @@ use std::result::Result;
 use image;
 use image::GenericImage;
 
+#[derive(Clone)]
 pub struct Bitmap {
    pixels: RefCell<Vec<u8>>,
    pub width: u32,

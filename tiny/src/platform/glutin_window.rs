@@ -228,7 +228,7 @@ impl Window {
                },
 
                glutin::WindowEvent::ReceivedCharacter(ch) => {
-                  if !ch.is_control() {
+                  if ch.is_ascii() && !ch.is_control() {
                      text_input.push(ch);
 
                   }
