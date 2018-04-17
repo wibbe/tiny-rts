@@ -230,9 +230,7 @@ impl Window {
                glutin::WindowEvent::ReceivedCharacter(ch) => {
                   if ch.is_ascii() && !ch.is_control() {
                      text_input.push(ch);
-
                   }
-                  //println!("Input: ({}) '{}' is_alphanumeric: {} is_control: {} is_ascii: {} is_ascii_alphabetic: {} is_ascii_alphanumeric: {} is_ascii_punctuation: {}", ch as u32, ch, ch.is_alphanumeric(), ch.is_control(), ch.is_ascii(), ch.is_ascii_alphabetic(), ch.is_ascii_alphanumeric(), ch.is_ascii_punctuation());
                },
 
                glutin::WindowEvent::KeyboardInput { input, .. } => {

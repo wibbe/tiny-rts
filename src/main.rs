@@ -17,6 +17,8 @@ struct App {
    font: Font,
    show_console: bool,
    mouse_pos: (u32, u32),
+
+   show_profiling: cmd::Var,
 }
 
 
@@ -39,14 +41,16 @@ impl Application for App {
 
       let mut game = Rc::new(game::Game::new(cmd.clone()));
 
-      let mut show_profiling = cmd.register_var("show-profiling", 0);
+      //let show_profiling = cmd.register_var("show-profiling", 0).unwrap();
 
       Ok(App {
          game: game,
-         cmd: cmd,
+         cmd: cmd.clone(),
          font: default_font::default_font(),
          show_console: false,
          mouse_pos: (0, 0),
+         
+         show_profiling: cmd.register_var("show-profiling", 0).unwrap(),
       })
    }
    
@@ -62,16 +66,6 @@ impl Application for App {
       if ctx.key_pressed(tiny::Key::Tab) {
          self.show_console = !self.show_console;
       }
-
-      {
-         let text_input = ctx.text_input();
-         if !text_input.is_empty() {
-            for ch in text_input.iter() {
-               println!("Text: {}", ch);
-            }
-         }
-      }
-
 
       !ctx.key_down(tiny::Key::Escape)
    }
@@ -105,11 +99,13 @@ impl Application for App {
          }
       }
 
+      if self.show_profiling.get_bool() {
+         ctx.draw_timing(painter, &self.font, pal::VALHALLA, pal::WHITE);
+      }
+
       if self.show_console {
          self.cmd.paint(painter);
       }
-
-      //ctx.draw_timing(painter, &self.font, pal::VALHALLA, pal::WHITE);
    }
 }
 

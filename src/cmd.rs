@@ -22,6 +22,11 @@ impl Var {
    pub fn get(&self) -> i32 {
       self.0.get()
    }
+
+   #[inline]
+   pub fn get_bool(&self) -> bool {
+      self.0.get() > 0
+   }
 }
 
 pub struct Function {
@@ -77,8 +82,40 @@ impl Cmd {
       Ok(())
    }
 
-   pub fn exec(&self, _line: String) -> Result<(), String> {
-      Ok(())
+   pub fn exec(&self, line: String) -> Result<String, String> {
+      let parts = line.split_whitespace().collect::<Vec<_>>();
+
+      if parts.len() == 0 {
+         return Err("no command specified".to_string());
+      }
+
+      let command = parts[0];
+
+      if command.ends_with(":") {
+         let var_name = command.trim_right_matches(':');
+         let vars = self.vars.borrow();
+
+         let var = match vars.get(var_name) {
+            Some(var) => var,
+            None => return Err(format!("could not find var '{}'", var_name)),
+         };
+
+         if parts.len() < 2 {
+            return Err(format!("no value to assign variable '{}'", var_name));
+         }
+
+         let value = match parts[1].parse::<i32>() {
+            Ok(value) => value,
+            Err(err) => return Err(err.to_string()),
+         };
+
+         var.set(value);
+         return Ok(value.to_string());
+      } else {
+
+      }
+
+      Err(format!("invalid command '{}'", line))
    }
 
    pub fn echo(&self, text: String) {
@@ -126,10 +163,16 @@ impl Cmd {
          *cursor = input.len();
       }
 
-      if ctx.key_pressed(tiny::Key::Return) {
-         self.echo(format!(">{}", &input.iter().collect::<String>()));
+      if ctx.key_pressed(tiny::Key::Return) && input.len() > 0 {
+         let command = input.iter().collect::<String>();
+         self.echo(format!(">{}", &command));
          input.clear();
          *cursor = 0;
+
+         match self.exec(command) {
+            Ok(result) => self.echo(result),
+            Err(err) => self.echo(format!("Error: {}", err)),
+         }
       }
 
       if ctx.key_pressed(tiny::Key::Left) {
