@@ -21,6 +21,7 @@ enum Event {
     MouseMove(i32, i32),
     MouseDown(Mouse),
     MouseUp(Mouse),
+    Text(char),
 }
 
 static mut WIN_EVENT: Option<Event> = None;
@@ -228,6 +229,10 @@ impl Window {
                      }
                   },
 
+                  Event::Text(ch) => {
+
+                  },
+
                   Event::MouseMove(x, y) => {
                      self.mouse_x = ((x as f64 / self.window_width as f64) * self.canvas_width as f64) as u32;
                      self.mouse_y = ((y as f64 / self.window_height as f64) * self.canvas_height as f64) as u32;
@@ -295,6 +300,11 @@ unsafe extern "system" fn wnd_callback(window: winapi::HWND, msg: winapi::UINT, 
       winapi::WM_KEYUP => {
          WIN_EVENT = Some(Event::KeyUp(wparam as u8));
       },
+
+      winapi::WM_CHAR => {
+         WIN_EVENT = Some(Event::Text(wparam as u8 as char));
+         println!("Text: ({}) '{}'", wparam as u32, wparam as u8 as char);
+      }
 
       winapi::WM_MOUSEMOVE => {
          WIN_EVENT = Some(Event::MouseMove(winapi::windowsx::GET_X_LPARAM(lparam) as i32, winapi::windowsx::GET_Y_LPARAM(lparam) as i32));
