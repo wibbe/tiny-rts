@@ -15,8 +15,6 @@ extern crate image;
 
  #[cfg(not(target_os = "windows"))]
 mod platform {  
-   
-   
    mod glutin_platform;
    pub use self::glutin_platform::*;
 }
@@ -136,27 +134,27 @@ pub struct Color {
 
 impl Color {
    pub fn new(r: u8, g: u8, b: u8, a: u8) -> Color {
-      Color { rgba: (a as u32) << 24 | (b as u32) << 16 | (g as u32) << 8 | r as u32 }
+      Color { rgba: (a as u32) << platform::COLOR_OFFSET_A | (b as u32) << platform::COLOR_OFFSET_B | (g as u32) << platform::COLOR_OFFSET_G | (r as u32) << platform::COLOR_OFFSET_R }
    }
 
    #[inline]
    pub fn red(&self) -> u8 {
-      (self.rgba & 0xff) as u8
+      ((self.rgba >> platform::COLOR_OFFSET_R) & 0xff) as u8
    }
 
    #[inline]
    pub fn green(&self) -> u8 {
-      ((self.rgba >> 8) & 0xff) as u8
+      ((self.rgba >> platform::COLOR_OFFSET_G) & 0xff) as u8
    }
 
    #[inline]
    pub fn blue(&self) -> u8 {
-      ((self.rgba >> 16) & 0xff) as u8
+      ((self.rgba >> platform::COLOR_OFFSET_B) & 0xff) as u8
    }
 
    #[inline]
    pub fn alpha(&self) -> u8 {
-      ((self.rgba >> 24) & 0xff) as u8
+      ((self.rgba >> platform::COLOR_OFFSET_A) & 0xff) as u8
    }
 
    #[inline]

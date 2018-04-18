@@ -4,7 +4,6 @@
 use std::ptr;
 
 use std::mem;
-use std::vec;
 use std::ffi::{OsStr};
 use std::os::windows::ffi::OsStrExt;
 
@@ -20,9 +19,16 @@ enum Event {
     KeyDown(u8),
     KeyUp(u8),
     MouseMove(i32, i32),
+    MouseDown(Mouse),
+    MouseUp(Mouse),
 }
 
 static mut WIN_EVENT: Option<Event> = None;
+
+pub const COLOR_OFFSET_R: u32 = 16;
+pub const COLOR_OFFSET_G: u32 = 8;
+pub const COLOR_OFFSET_B: u32 = 0;
+pub const COLOR_OFFSET_A: u32 = 24;
 
 
 pub struct Window {
@@ -182,22 +188,22 @@ impl Window {
    }
 
    pub fn pump(&mut self) -> bool {
-     unsafe {
-        let mut msg = winapi::MSG {
+      unsafe {
+         let mut msg = winapi::MSG {
             hwnd: 0 as winapi::HWND,
             message: 0 as winapi::UINT,
             wParam: 0 as winapi::WPARAM,
             lParam: 0 as winapi::LPARAM,
             time: 0 as winapi::DWORD,
             pt: winapi::POINT { x: 0, y: 0 },
-        };
+         };
 
-        ptr::write_bytes::<bool>(self.key_delta.as_mut_ptr(), 0, 256);
-        ptr::write_bytes::<bool>(self.mouse_delta.as_mut_ptr(), 0, 3);
+         ptr::write_bytes::<bool>(self.key_delta.as_mut_ptr(), 0, 256);
+         ptr::write_bytes::<bool>(self.mouse_delta.as_mut_ptr(), 0, 3);
 
-        self.text_input.clear();
+         self.text_input.clear();
 
-        while user32::PeekMessageW(&mut msg, 0 as winapi::HWND, 0, 0, winapi::PM_REMOVE) != winapi::FALSE {
+         while user32::PeekMessageW(&mut msg, 0 as winapi::HWND, 0, 0, winapi::PM_REMOVE) != winapi::FALSE {
 
             if msg.message == winapi::WM_QUIT {
                 return false;
@@ -207,24 +213,36 @@ impl Window {
             user32::DispatchMessageW(&mut msg);
 
             if let Some(event) = WIN_EVENT {
-                match event {
-                    Event::KeyDown(key) => {
-                        if let Some(key) = keycode_win32_to_tiny(key){                        
-                           self.key_state[key as usize] = true;
-                           self.key_delta[key as usize] = true;
-                        }
-                    },
+               match event {
+                  Event::KeyDown(key) => {
+                     if let Some(key) = keycode_win32_to_tiny(key) {
+                        self.key_state[key as usize] = true;
+                        self.key_delta[key as usize] = true;
+                     }
+                  },
                     
-                    Event::KeyUp(key) => {
-                        if let Some(key) = keycode_win32_to_tiny(key) {
-                           self.key_state[key as usize] = false;
-                           self.key_delta[key as usize] = true;
-                        }
-                    },
+                  Event::KeyUp(key) => {
+                     if let Some(key) = keycode_win32_to_tiny(key) {
+                        self.key_state[key as usize] = false;
+                        self.key_delta[key as usize] = true;
+                     }
+                  },
 
-                    Event::MouseMove(x, y) => {
-                    },
-                }
+                  Event::MouseMove(x, y) => {
+                     self.mouse_x = ((x as f64 / self.window_width as f64) * self.canvas_width as f64) as u32;
+                     self.mouse_y = ((y as f64 / self.window_height as f64) * self.canvas_height as f64) as u32;
+                  },
+
+                  Event::MouseDown(button) => {
+                     self.mouse_state[button as usize] = true;
+                     self.mouse_delta[button as usize] = true;
+                  },
+
+                  Event::MouseUp(button) => {
+                     self.mouse_state[button as usize] = false;
+                     self.mouse_delta[button as usize] = true;
+                  },
+               }
             }
 
             WIN_EVENT = None;
@@ -265,20 +283,48 @@ unsafe fn register_window_class() -> Result<Vec<u16>, String> {
 unsafe extern "system" fn wnd_callback(window: winapi::HWND, msg: winapi::UINT, wparam: winapi::WPARAM, lparam: winapi::LPARAM) -> winapi::LRESULT {
 
     match msg {
-        winapi::WM_DESTROY => {
-            user32::PostQuitMessage(0);
-        },
+      winapi::WM_DESTROY => {
+         user32::PostQuitMessage(0);
+      },
 
-        winapi::WM_KEYDOWN => {
-            println!("key down: {}", wparam);
-            WIN_EVENT = Some(Event::KeyDown(wparam as u8));
-        },
+      winapi::WM_KEYDOWN => {
+         println!("key down: {}", wparam);
+         WIN_EVENT = Some(Event::KeyDown(wparam as u8));
+      },
 
-        winapi::WM_KEYUP => {
-            WIN_EVENT = Some(Event::KeyUp(wparam as u8));
-        },
+      winapi::WM_KEYUP => {
+         WIN_EVENT = Some(Event::KeyUp(wparam as u8));
+      },
 
-        _ => (),
+      winapi::WM_MOUSEMOVE => {
+         WIN_EVENT = Some(Event::MouseMove(winapi::windowsx::GET_X_LPARAM(lparam) as i32, winapi::windowsx::GET_Y_LPARAM(lparam) as i32));
+      },
+
+      winapi::WM_LBUTTONUP => {
+         WIN_EVENT = Some(Event::MouseUp(Mouse::Left));
+      },
+
+      winapi::WM_LBUTTONDOWN => {
+         WIN_EVENT = Some(Event::MouseDown(Mouse::Left));
+      },
+
+      winapi::WM_MBUTTONUP => {
+         WIN_EVENT = Some(Event::MouseUp(Mouse::Middle));
+      },
+
+      winapi::WM_MBUTTONDOWN => {
+         WIN_EVENT = Some(Event::MouseDown(Mouse::Middle));
+      },
+
+      winapi::WM_RBUTTONUP => {
+         WIN_EVENT = Some(Event::MouseUp(Mouse::Right));
+      },
+
+      winapi::WM_RBUTTONDOWN => {
+         WIN_EVENT = Some(Event::MouseDown(Mouse::Right));
+      },
+
+      _ => (),
     }
 
     return user32::DefWindowProcW(window, msg, wparam, lparam)

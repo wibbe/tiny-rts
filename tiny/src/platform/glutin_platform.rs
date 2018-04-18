@@ -12,6 +12,11 @@ use std::ptr;
 
 use super::super::*;
 
+pub const COLOR_OFFSET_R: u32 = 0;
+pub const COLOR_OFFSET_G: u32 = 8;
+pub const COLOR_OFFSET_B: u32 = 16;
+pub const COLOR_OFFSET_A: u32 = 24;
+
 pub struct Window {
    events_loop: Box<glutin::EventsLoop>,
    window: Box<glutin::GlWindow>,
