@@ -13,7 +13,11 @@ image = "0.18.0"
 glutin = "0.14.0"
 
 [target.'cfg(windows)'.dependencies]
-winapi  = "0.3.4"
+winapi  = "0.2.8"
+user32-sys = "0.2.0"
+kernel32-sys = "0.2.2"
+shell32-sys = "0.1.2"
+gdi32-sys = "0.2.0"
 
 [build-dependencies]
 gl_generator = "0.9.0"

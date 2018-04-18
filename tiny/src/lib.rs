@@ -3,14 +3,22 @@ extern crate image;
 
  #[cfg(target_os = "windows")]
  mod platform {
-     mod windows;
-     pub use self::windows::*;
+   extern crate winapi;
+   extern crate kernel32;
+   extern crate user32;
+   extern crate shell32;
+   extern crate gdi32;
+
+   mod win32_platform;
+   pub use self::win32_platform::*;
  }
 
  #[cfg(not(target_os = "windows"))]
 mod platform {  
-   mod glutin_window;
-   pub use self::glutin_window::*;
+   
+   
+   mod glutin_platform;
+   pub use self::glutin_platform::*;
 }
 
 mod bitmap;
