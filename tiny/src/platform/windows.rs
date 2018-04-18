@@ -1,14 +1,17 @@
 
+#[windows_subsystem(windows)]
+
+extern crate winapi;
 
 use std::ptr;
 use std::mem;
 use std::ffi::{OsStr};
 use std::os::windows::ffi::OsStrExt;
 
-use super::winapi;
-use super::gdi32;
-use super::user32;
-use super::kernel32;
+//use super::winapi;
+use self::winapi::gdi32;
+use self::user32;
+use self::kernel32;
 
 use super::super::*;
 
