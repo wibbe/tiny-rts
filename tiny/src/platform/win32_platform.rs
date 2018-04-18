@@ -1,6 +1,4 @@
 
-#[windows_subsystem(windows)]
-
 use std::ptr;
 
 use std::mem;
@@ -67,6 +65,7 @@ impl Window {
             Ok(class_name) => class_name,
             Err(err) => return Err(err),
          };
+
 
          let screen_width = user32::GetSystemMetrics(winapi::SM_CXSCREEN) as u32;
          let screen_height = user32::GetSystemMetrics(winapi::SM_CYSCREEN) as u32;

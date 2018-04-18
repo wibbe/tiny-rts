@@ -1,5 +1,6 @@
 
-#[windows_subsystem(windows)]
+// Make sure we don't open a console window if we are building on windows and in release mode
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 extern crate tiny;
 
