@@ -230,7 +230,9 @@ impl Window {
                   },
 
                   Event::Text(ch) => {
-
+                     if ch.is_ascii() && !ch.is_control() {
+                        self.text_input.push(ch);
+                     }
                   },
 
                   Event::MouseMove(x, y) => {
@@ -303,7 +305,6 @@ unsafe extern "system" fn wnd_callback(window: winapi::HWND, msg: winapi::UINT, 
 
       winapi::WM_CHAR => {
          WIN_EVENT = Some(Event::Text(wparam as u8 as char));
-         println!("Text: ({}) '{}'", wparam as u32, wparam as u8 as char);
       }
 
       winapi::WM_MOUSEMOVE => {

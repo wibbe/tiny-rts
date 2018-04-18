@@ -1,4 +1,6 @@
 
+#[windows_subsystem(windows)]
+
 extern crate tiny;
 
 mod cmd;
@@ -18,7 +20,7 @@ struct App {
    show_console: bool,
    mouse_pos: (u32, u32),
 
-   show_profiling: cmd::Var,
+   show_performance: cmd::Var,
 }
 
 
@@ -50,7 +52,7 @@ impl Application for App {
          show_console: false,
          mouse_pos: (0, 0),
          
-         show_profiling: cmd.register_var("show-profiling", 0).unwrap(),
+         show_performance: cmd.register_var("show-performance", 0).unwrap(),
       })
    }
    
@@ -99,7 +101,7 @@ impl Application for App {
          }
       }
 
-      if self.show_profiling.get_bool() {
+      if self.show_performance.get_bool() {
          ctx.draw_timing(painter, &self.font, pal::VALHALLA, pal::WHITE);
       }
 
