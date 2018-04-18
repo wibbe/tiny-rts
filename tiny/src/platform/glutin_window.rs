@@ -122,14 +122,17 @@ impl Window {
       })
    }
 
+   #[allow(dead_code)]
    pub fn show(&self) {
       self.window.show();
    }
 
+   #[allow(dead_code)]
    pub fn hide(&self) {
       self.window.hide();
    }
 
+   #[allow(dead_code)]
    pub fn set_background_color(&mut self, color: Color) {
       self.background_color = color;
    }

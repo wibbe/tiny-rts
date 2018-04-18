@@ -409,7 +409,7 @@ pub struct Context {
 }
 
 impl Context {
-   fn new(window: platform::Window, config: &Config) -> Context {
+   fn new(window: platform::Window) -> Context {
       Context {
          palette: RefCell::new(Palette::new()),
          window: window,
@@ -497,7 +497,7 @@ pub fn run<T: Application>(title: &str, width: u32, height: u32, scale: u32) -> 
    println!("Starting '{}' with resolution {}x{} at scale {}", config.title, config.width, config.height, config.scale);
 
    let mut context = match platform::Window::new(&config) {
-      Ok(window) => Context::new(window, &config),
+      Ok(window) => Context::new(window),
       Err(err) => return Err(err),
    };
 
@@ -514,10 +514,10 @@ pub fn run<T: Application>(title: &str, width: u32, height: u32, scale: u32) -> 
    let target_frame_time = 33_333_333u32; // An fps of 30Hz
 
    let mut step_time;
-   let mut paint_time = 0.0;
-   let mut blit_time = 0.0;
-   let mut frame_time = 0.0;
-   let mut sleep_time = 0.0;
+   let mut paint_time;
+   let mut blit_time;
+   let mut frame_time;
+   let mut sleep_time;
 
    // Main loop
    'main: loop {
