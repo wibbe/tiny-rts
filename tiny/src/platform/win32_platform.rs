@@ -1,14 +1,19 @@
 
+#![cfg(target_os = "windows")]
+
 use std::ptr;
 
 use std::mem;
 use std::ffi::{OsStr};
 use std::os::windows::ffi::OsStrExt;
 
-use super::winapi;
-use super::gdi32;
-use super::user32;
-use super::kernel32;
+use winapi::shared::windef::{HWND, RECT, POINT, HBRUSH};
+use winapi::shared::minwindef::{FALSE, WPARAM, LPARAM, LRESULT, UINT, DWORD, HINSTANCE};
+use winapi::um::winnt::{LONG, LPCWSTR, VOID};
+use winapi::um::wingdi;
+use winapi::um::winuser;
+use winapi::um::libloaderapi;
+use winapi::shared::windowsx;
 
 use super::super::*;
 
@@ -31,8 +36,8 @@ pub const COLOR_OFFSET_A: u32 = 24;
 
 
 pub struct Window {
-   handle: winapi::HWND,
-   window_bmi: winapi::BITMAPINFO,
+   handle: HWND,
+   window_bmi: wingdi::BITMAPINFO,
    window_buffer: Vec<u32>,
 
    background_color: Color,
@@ -67,41 +72,41 @@ impl Window {
          };
 
 
-         let screen_width = user32::GetSystemMetrics(winapi::SM_CXSCREEN) as u32;
-         let screen_height = user32::GetSystemMetrics(winapi::SM_CYSCREEN) as u32;
+         let screen_width = winuser::GetSystemMetrics(winuser::SM_CXSCREEN) as u32;
+         let screen_height = winuser::GetSystemMetrics(winuser::SM_CYSCREEN) as u32;
 
          let window_width = config.width * config.scale;
          let window_height = config.height * config.scale;
          let window_left = (screen_width - window_width) / 2;
          let window_top = (screen_height - window_height) / 2;
 
-         let mut rc = winapi::RECT {
-            left: window_left as winapi::LONG, right: (window_left + window_width) as winapi::LONG,
-            top: window_top as winapi::LONG, bottom: (window_top + window_height) as winapi::LONG,
+         let mut rc = RECT {
+            left: window_left as LONG, right: (window_left + window_width) as LONG,
+            top: window_top as LONG, bottom: (window_top + window_height) as LONG,
          };
 
-         let style = winapi::WS_CAPTION | winapi::WS_SYSMENU | winapi::WS_MINIMIZEBOX;
-         user32::AdjustWindowRect(&mut rc, style, winapi::FALSE);
+         let style = winuser::WS_CAPTION | winuser::WS_SYSMENU | winuser::WS_MINIMIZEBOX;
+         winuser::AdjustWindowRect(&mut rc, style, FALSE);
 
-         let handle = user32::CreateWindowExW(0,
-                                              class_name.as_ptr(),
-                                              to_wstring(config.title.as_str()).as_ptr() as winapi::LPCWSTR,
-                                              style,
-                                              rc.left, rc.top,
-                                              rc.right - rc.left, rc.bottom - rc.top,
-                                              ptr::null_mut(),
-                                              ptr::null_mut(),
-                                              kernel32::GetModuleHandleW(ptr::null()),
-                                              ptr::null_mut());
+         let handle = winuser::CreateWindowExW(0,
+                                               class_name.as_ptr(),
+                                               to_wstring(config.title.as_str()).as_ptr() as LPCWSTR,
+                                               style,
+                                               rc.left, rc.top,
+                                               rc.right - rc.left, rc.bottom - rc.top,
+                                               ptr::null_mut(),
+                                               ptr::null_mut(),
+                                               libloaderapi::GetModuleHandleW(ptr::null()),
+                                               ptr::null_mut());
          
-         let window_bmi = winapi::BITMAPINFO {
-            bmiHeader: winapi::BITMAPINFOHEADER {
-               biSize: mem::size_of::<winapi::BITMAPINFOHEADER>() as winapi::DWORD,
-               biWidth: config.width as winapi::LONG,
-               biHeight: config.height as winapi::LONG,
+         let window_bmi = wingdi::BITMAPINFO {
+            bmiHeader: wingdi::BITMAPINFOHEADER {
+               biSize: mem::size_of::<wingdi::BITMAPINFOHEADER>() as DWORD,
+               biWidth: config.width as LONG,
+               biHeight: config.height as LONG,
                biPlanes: 1,
                biBitCount: 32,
-               biCompression: winapi::BI_RGB,
+               biCompression: wingdi::BI_RGB,
                biSizeImage: 0,
                biXPelsPerMeter: 0,
                biYPelsPerMeter: 0,
@@ -143,14 +148,14 @@ impl Window {
    #[allow(dead_code)]
    pub fn show(&self) {
       unsafe {
-         user32::ShowWindow(self.handle, winapi::SW_SHOW);
+         winuser::ShowWindow(self.handle, winuser::SW_SHOW);
       }
    }
 
    #[allow(dead_code)]
    pub fn hide(&self) {
       unsafe {
-         user32::ShowWindow(self.handle, winapi::SW_HIDE);
+         winuser::ShowWindow(self.handle, winuser::SW_HIDE);
       }
    }
 
@@ -171,17 +176,17 @@ impl Window {
             }
          }
 
-         let dc = user32::GetDC(self.handle);
+         let dc = winuser::GetDC(self.handle);
 
-         gdi32::StretchDIBits(dc,
-                              0, 0, self.window_width as i32, self.window_height as i32,
-                              0, 0, self.canvas_width as i32, self.canvas_height as i32,
-                              mem::transmute::<*mut u32, *const winapi::VOID>(pixels),
-                              &self.window_bmi,
-                              winapi::DIB_RGB_COLORS,
-                              winapi::SRCCOPY);
+         wingdi::StretchDIBits(dc,
+                               0, 0, self.window_width as i32, self.window_height as i32,
+                               0, 0, self.canvas_width as i32, self.canvas_height as i32,
+                               mem::transmute::<*mut u32, *const VOID>(pixels),
+                               &self.window_bmi,
+                               wingdi::DIB_RGB_COLORS,
+                               wingdi::SRCCOPY);
 
-         user32::ReleaseDC(self.handle, dc);
+         winuser::ReleaseDC(self.handle, dc);
       }
 
       Ok(())
@@ -189,13 +194,13 @@ impl Window {
 
    pub fn pump(&mut self) -> bool {
       unsafe {
-         let mut msg = winapi::MSG {
-            hwnd: 0 as winapi::HWND,
-            message: 0 as winapi::UINT,
-            wParam: 0 as winapi::WPARAM,
-            lParam: 0 as winapi::LPARAM,
-            time: 0 as winapi::DWORD,
-            pt: winapi::POINT { x: 0, y: 0 },
+         let mut msg = winuser::MSG {
+            hwnd: 0 as HWND,
+            message: 0 as UINT,
+            wParam: 0 as WPARAM,
+            lParam: 0 as LPARAM,
+            time: 0 as DWORD,
+            pt: POINT { x: 0, y: 0 },
          };
 
          ptr::write_bytes::<bool>(self.key_delta.as_mut_ptr(), 0, 256);
@@ -203,14 +208,14 @@ impl Window {
 
          self.text_input.clear();
 
-         while user32::PeekMessageW(&mut msg, 0 as winapi::HWND, 0, 0, winapi::PM_REMOVE) != winapi::FALSE {
+         while winuser::PeekMessageW(&mut msg, 0 as HWND, 0, 0, winuser::PM_REMOVE) != FALSE {
 
-            if msg.message == winapi::WM_QUIT {
+            if msg.message == winuser::WM_QUIT {
                 return false;
             }
 
-            user32::TranslateMessage(&mut msg);
-            user32::DispatchMessageW(&mut msg);
+            winuser::TranslateMessage(&mut msg);
+            winuser::DispatchMessageW(&mut msg);
 
             if let Some(event) = WIN_EVENT {
                match event {
@@ -262,22 +267,22 @@ impl Window {
 unsafe fn register_window_class() -> Result<Vec<u16>, String> {
    let class_name = to_wstring("Tiny Class");
 
-   let class = winapi::WNDCLASSEXW {
-      cbSize: mem::size_of::<winapi::WNDCLASSEXW>() as winapi::UINT,
-      style: winapi::CS_HREDRAW | winapi::CS_VREDRAW | winapi::CS_OWNDC,
+   let class = winuser::WNDCLASSEXW {
+      cbSize: mem::size_of::<winuser::WNDCLASSEXW>() as UINT,
+      style: winuser::CS_HREDRAW | winuser::CS_VREDRAW | winuser::CS_OWNDC,
       lpfnWndProc: Some(wnd_callback),
       cbClsExtra: 0,
       cbWndExtra: 0,
-      hInstance: kernel32::GetModuleHandleW(ptr::null()),
-      hIcon: user32::LoadIconW(0 as winapi::HINSTANCE, winapi::IDI_APPLICATION),
-      hCursor: user32::LoadCursorW(0 as winapi::HINSTANCE, winapi::IDI_APPLICATION), //user32::LoadCursor(0, winapi::IDC_ARROW),
-      hbrBackground: gdi32::GetStockObject(winapi::BLACK_BRUSH) as winapi::HBRUSH,
+      hInstance: libloaderapi::GetModuleHandleW(ptr::null()),
+      hIcon: winuser::LoadIconW(0 as HINSTANCE, winuser::IDI_APPLICATION),
+      hCursor: winuser::LoadCursorW(0 as HINSTANCE, winuser::IDI_APPLICATION), //user32::LoadCursor(0, winapi::IDC_ARROW),
+      hbrBackground: wingdi::GetStockObject(wingdi::BLACK_BRUSH as i32) as HBRUSH,
       lpszMenuName: ptr::null(),
       lpszClassName: class_name.as_ptr(),
       hIconSm: ptr::null_mut(),
    };
 
-   let result = user32::RegisterClassExW(&class);
+   let result = winuser::RegisterClassExW(&class);
 
    if result == 0u16 {
       return Err(String::from("Could not register class"));
@@ -286,58 +291,58 @@ unsafe fn register_window_class() -> Result<Vec<u16>, String> {
    Ok(class_name)
 }
 
-unsafe extern "system" fn wnd_callback(window: winapi::HWND, msg: winapi::UINT, wparam: winapi::WPARAM, lparam: winapi::LPARAM) -> winapi::LRESULT {
+unsafe extern "system" fn wnd_callback(window: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
 
     match msg {
-      winapi::WM_DESTROY => {
-         user32::PostQuitMessage(0);
+      winuser::WM_DESTROY => {
+         winuser::PostQuitMessage(0);
       },
 
-      winapi::WM_KEYDOWN => {
-         println!("key down: {}", wparam);
+      winuser::WM_KEYDOWN => {
+         //println!("key down: {}", wparam);
          WIN_EVENT = Some(Event::KeyDown(wparam as u8));
       },
 
-      winapi::WM_KEYUP => {
+      winuser::WM_KEYUP => {
          WIN_EVENT = Some(Event::KeyUp(wparam as u8));
       },
 
-      winapi::WM_CHAR => {
+      winuser::WM_CHAR => {
          WIN_EVENT = Some(Event::Text(wparam as u8 as char));
       }
 
-      winapi::WM_MOUSEMOVE => {
-         WIN_EVENT = Some(Event::MouseMove(winapi::windowsx::GET_X_LPARAM(lparam) as i32, winapi::windowsx::GET_Y_LPARAM(lparam) as i32));
+      winuser::WM_MOUSEMOVE => {
+         WIN_EVENT = Some(Event::MouseMove(windowsx::GET_X_LPARAM(lparam) as i32, windowsx::GET_Y_LPARAM(lparam) as i32));
       },
 
-      winapi::WM_LBUTTONUP => {
+      winuser::WM_LBUTTONUP => {
          WIN_EVENT = Some(Event::MouseUp(Mouse::Left));
       },
 
-      winapi::WM_LBUTTONDOWN => {
+      winuser::WM_LBUTTONDOWN => {
          WIN_EVENT = Some(Event::MouseDown(Mouse::Left));
       },
 
-      winapi::WM_MBUTTONUP => {
+      winuser::WM_MBUTTONUP => {
          WIN_EVENT = Some(Event::MouseUp(Mouse::Middle));
       },
 
-      winapi::WM_MBUTTONDOWN => {
+      winuser::WM_MBUTTONDOWN => {
          WIN_EVENT = Some(Event::MouseDown(Mouse::Middle));
       },
 
-      winapi::WM_RBUTTONUP => {
+      winuser::WM_RBUTTONUP => {
          WIN_EVENT = Some(Event::MouseUp(Mouse::Right));
       },
 
-      winapi::WM_RBUTTONDOWN => {
+      winuser::WM_RBUTTONDOWN => {
          WIN_EVENT = Some(Event::MouseDown(Mouse::Right));
       },
 
       _ => (),
     }
 
-    return user32::DefWindowProcW(window, msg, wparam, lparam)
+    return winuser::DefWindowProcW(window, msg, wparam, lparam);
 }
 
 fn keycode_win32_to_tiny(key_code: u8) -> Option<Key> {

@@ -9,15 +9,19 @@ build = "build.rs"
 libc = "0.2.17"
 image = "0.18.0"
 
-[target.'cfg(not(windows))'.dependencies]
+[target.'cfg(any(linux, macos))'.dependencies]
 glutin = "0.14.0"
 
-[target.'cfg(windows)'.dependencies]
-winapi  = "0.2.8"
-user32-sys = "0.2.0"
-kernel32-sys = "0.2.2"
-shell32-sys = "0.1.2"
-gdi32-sys = "0.2.0"
+[target.'cfg(windows)'.dependencies.winapi]
+version = "0.3.4"
+features = [
+    "winnt",
+    "winuser",
+    "wingdi",
+	"windowsx",
+	"libloaderapi"
+]
+
 
 [build-dependencies]
 gl_generator = "0.9.0"

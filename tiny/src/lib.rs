@@ -1,25 +1,24 @@
 extern crate libc;
 extern crate image;
 
- #[cfg(target_os = "windows")]
+#[cfg(target_os = "windows")] extern crate winapi;
+#[cfg(not(target_os = "windows"))] extern crate glutin;
+
+/*
  mod platform {
-   extern crate winapi;
-   extern crate kernel32;
-   extern crate user32;
-   extern crate shell32;
-   extern crate gdi32;
 
    mod win32_platform;
    pub use self::win32_platform::*;
  }
 
- #[cfg(not(target_os = "windows"))]
 mod platform {  
    mod glutin_platform;
    pub use self::glutin_platform::*;
 }
+*/
 
 mod bitmap;
+mod platform;
 
 pub mod palette;
 pub mod default_font;
