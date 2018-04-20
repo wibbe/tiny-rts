@@ -402,10 +402,10 @@ pub fn run<T: Application>(title: &str, width: u32, height: u32, scale: u32) -> 
       let frame_duration = frame_now.elapsed();
       frame_time = to_milisec(frame_duration);
 
-      context.step_time = context.step_time * 0.98 + step_time * 0.02;
-      context.paint_time = context.paint_time * 0.98 + paint_time * 0.02;
-      context.blit_time = context.blit_time * 0.98 + blit_time * 0.02;
-      context.frame_time = context.frame_time * 0.98 + frame_time * 0.02;
+      context.step_time = context.step_time * 0.9 + step_time * 0.1;
+      context.paint_time = context.paint_time * 0.9 + paint_time * 0.1;
+      context.blit_time = context.blit_time * 0.9 + blit_time * 0.1;
+      context.frame_time = context.frame_time * 0.9 + frame_time * 0.1;
 
       // Sleep to force the frame time to 33ms
       if frame_duration.as_secs() == 0 && frame_duration.subsec_nanos() < target_frame_time {

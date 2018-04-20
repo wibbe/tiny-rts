@@ -113,7 +113,7 @@ impl Application for App {
 }
 
 fn main() {
-   if let Err(err) = tiny::run::<App>("Tiny RTS", 320, 200, 3) {
+   if let Err(err) = tiny::run::<App>("Tiny RTS", 640, 360, 2) {
       println!("Error: {}", err);
    }
 }

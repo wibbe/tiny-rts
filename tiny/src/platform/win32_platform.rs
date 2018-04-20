@@ -103,7 +103,7 @@ impl Window {
             bmiHeader: wingdi::BITMAPINFOHEADER {
                biSize: mem::size_of::<wingdi::BITMAPINFOHEADER>() as DWORD,
                biWidth: config.width as LONG,
-               biHeight: config.height as LONG,
+               biHeight: -(config.height as LONG),
                biPlanes: 1,
                biBitCount: 32,
                biCompression: wingdi::BI_RGB,
@@ -166,14 +166,13 @@ impl Window {
 
    pub fn paint(&mut self, bitmap: &Bitmap, palette_colors: &Vec<Color>) -> Result<(), String> {
       unsafe {
-         let pixels = self.window_buffer.as_mut_ptr();
-         let mut i = 0;
+         let canvas_pixels = self.window_buffer.as_mut_ptr();
+         let bitmap_pixels = bitmap.pixels.borrow().as_ptr();
+         let len: isize  = (self.canvas_height * self.canvas_width) as isize;
 
-         for y in 0..self.canvas_height {
-            for x in 0..self.canvas_width {
-               *pixels.offset(i) = palette_colors[bitmap.pixel(x, self.canvas_height - y - 1) as usize].rgba;
-               i += 1;
-            }
+         // Decode bitmap according to the supplied palette
+         for i in 0..len {
+            *canvas_pixels.offset(i) = palette_colors[*bitmap_pixels.offset(i) as usize].rgba;
          }
 
          let dc = winuser::GetDC(self.handle);
@@ -181,7 +180,7 @@ impl Window {
          wingdi::StretchDIBits(dc,
                                0, 0, self.window_width as i32, self.window_height as i32,
                                0, 0, self.canvas_width as i32, self.canvas_height as i32,
-                               mem::transmute::<*mut u32, *const VOID>(pixels),
+                               mem::transmute::<*mut u32, *const VOID>(canvas_pixels),
                                &self.window_bmi,
                                wingdi::DIB_RGB_COLORS,
                                wingdi::SRCCOPY);

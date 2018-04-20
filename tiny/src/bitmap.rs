@@ -11,7 +11,7 @@ use image::GenericImage;
 
 #[derive(Clone)]
 pub struct Bitmap {
-   pixels: RefCell<Vec<u8>>,
+   pub pixels: RefCell<Vec<u8>>,
    pub width: u32,
    pub height: u32,
 }
