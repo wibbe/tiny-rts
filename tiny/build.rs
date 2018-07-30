@@ -20,10 +20,10 @@ fn generate_gl_bindings() {
         .unwrap();
 }
 
-fn generate_default_font() {
+fn generate_font(input_file: &str, output_file: &str, name: &str, width: u32, height: u32) {
    let out_dir = env::var("OUT_DIR").unwrap();
-   let out_path = Path::new(&out_dir).join("default_font_data.rs");
-   let in_path = Path::new("res/default.png");
+   let out_path = Path::new(&out_dir).join(output_file);
+   let in_path = Path::new(input_file);
 
    let img = image::open(in_path).unwrap();
    let (w, h) = img.dimensions();
@@ -56,12 +56,12 @@ fn generate_default_font() {
    let mut out = LineWriter::new(out);
 
    writeln!(out, "").unwrap();
-   writeln!(out, "pub const DEFAULT_FONT_WIDTH: u32 = {};", w).unwrap();
-   writeln!(out, "pub const DEFAULT_FONT_HEIGHT: u32 = {};", h).unwrap();
-   writeln!(out, "pub const DEFAULT_CHAR_WIDTH: u32 = {};", 4).unwrap();
-   writeln!(out, "pub const DEFAULT_CHAR_HEIGHT: u32 = {};", 7).unwrap();
-   writeln!(out, "pub const DEFAULT_LINE_HEIGHT: u32 = {};", 9).unwrap();
-   writeln!(out, "pub static DEFAULT_FONT_DATA: [u8; {}] = [", data.len()).unwrap();
+   writeln!(out, "pub const {}_WIDTH: u32 = {};", name, w).unwrap();
+   writeln!(out, "pub const {}_HEIGHT: u32 = {};", name, h).unwrap();
+   writeln!(out, "pub const {}_CHAR_WIDTH: u32 = {};", name, width).unwrap();
+   writeln!(out, "pub const {}_CHAR_HEIGHT: u32 = {};", name, height).unwrap();
+   writeln!(out, "pub const {}_LINE_HEIGHT: u32 = {};", name, height + 2).unwrap();
+   writeln!(out, "pub static {}_DATA: [u8; {}] = [", name, data.len()).unwrap();
 
    let mut count = 0;
    for pixel in data {
@@ -83,5 +83,6 @@ fn generate_default_font() {
 
 fn main() {
    generate_gl_bindings();
-   generate_default_font();
+   generate_font("res/font-4x7.png", "font_4x7_data.rs", "FONT_4X7", 4, 7);
+   generate_font("res/font-4x10.png", "font_4x10_data.rs", "FONT_4X10", 4, 10);
 }

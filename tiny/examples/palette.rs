@@ -3,7 +3,7 @@ extern crate tiny;
 
 use tiny::*;
 use tiny::palette::dawn_bringer as pal;
-use tiny::font;
+use tiny::default_font;
 
 use std::path::Path;
 
@@ -19,7 +19,7 @@ impl Application for App {
       ctx.set_palette(pal::create_palette());
 
       Ok(App {
-         font: font::default_font(),
+         font: default_font::font_4x7(),
          mouse_pos: (0, 0),
          color: None,
       })

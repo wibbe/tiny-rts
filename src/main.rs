@@ -29,7 +29,7 @@ impl Application for App {
    fn new(ctx: &mut tiny::Context) -> Result<App, String> {
       ctx.set_palette(pal::create_palette());
 
-      let font = default_font::default_font();
+      let font = default_font::font_4x10();
 
       // Create command
       let mut cmd = Rc::new(cmd::Cmd::new(cmd::Config {
@@ -49,7 +49,7 @@ impl Application for App {
       Ok(App {
          game: game,
          cmd: cmd.clone(),
-         font: default_font::default_font(),
+         font: font,
          show_console: false,
          mouse_pos: (0, 0),
          
@@ -113,7 +113,7 @@ impl Application for App {
 }
 
 fn main() {
-   if let Err(err) = tiny::run::<App>("Tiny RTS", 640, 360, 2) {
+   if let Err(err) = tiny::run::<App>("Tiny RTS", 320, 200, 3) {
       println!("Error: {}", err);
    }
 }
